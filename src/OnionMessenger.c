@@ -9,8 +9,6 @@
 #include 	<netinet/in.h>
 #include    <time.h>
 
-#include    "str_def.h"
-
 
 
 int main(int argc, char *argv[]){
@@ -34,7 +32,10 @@ int main(int argc, char *argv[]){
 		printf("[ERROR] dbserver doesn't works! :( \n");
 		exit(1);
 	}
-		
+	
+	// [ip], [port] 서버를 오픈한다
+	// 메시지를 받으면 msg_send()으로  
+	runServer(port); 
 	
 	
 	printf("test");

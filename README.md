@@ -6,6 +6,7 @@
 - Mincheol son
 - Dauren serkeshev
 
+
 # Requirement
 - message: encryption / decryption (input: message, receiver's github ID)
 - network: send and receive information / refresh in
@@ -17,13 +18,17 @@
 
 
 # Requirement 
-- Onion Messenger가 동작하기 위해서는 2개의 서버가 필요합니다. 
-1. DB서버 : 현재 네트워크에 접속한 사람들의 목록을 제공해 주는 서버. 
-2. 공개키 서버 : 사용자들의 공개키를 배포하는 서버. Github IndividualKeys 페이지를 사용하였습니다. 
+- Onion Messenger가 동작하기 위해서는 2개의 서버가 필요합니다.  
 
+1. DB서버 : 현재 네트워크에 접속한 사람들의 목록을 제공해 주는 서버.  
+
+2. 공개키 서버 : 사용자들의 공개키를 배포하는 서버. Github 의 IndividualKeys 페이지를 사용하였습니다. 
+
+-----
 
 # Onion Protocol
-![Onion](https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Onion_diagram.svg/1200px-Onion_diagram.svg.png)
+![Onion](https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Onion_diagram.svg/1200px-Onion_diagram.svg.png)  
+  
 Onion 은 연속적인 암호화 레이어로 메시지를 "포장"하여 형성된 데이터 구조입니다.  
 
 이러한 데이터는 목적지에 도달하기 전에 다수의 중간 컴퓨터에 의해 암호가 해독됩니다.  
@@ -32,17 +37,18 @@ Onion 은 연속적인 암호화 레이어로 메시지를 "포장"하여 형성
 
 Circuit에 있는 어떤 노드도 Sender가 데이터의 출처가 되는 노드인지 아니면 다른 중개자 노드인지 알 수 없습니다.  
 
-
-
-# Protocol
-모든 데이터는 파일의 형태로 전송됩니다. 
 -----
-| 전송 데이터 |
-| line 1   | 다음 목적지의 IP    |
-| line 2   | 다음 목적지의 Port  |
+
+# Protocol 
+
+전송되는 패킷의 프로토콜은 아래와 같습니다. 
+-----
+| line 1   | 다음 중개자의 IP    |
+| line 2   | 다음 중개자의 Port  |
 | line 3~  | 암호화된 데이터 블록 |
 
 
+-----
 
 # Additional features
 1. 네트워크에 들어온 사용자는 DB서버에 [자신의 IP, 자신의 Port, 자신의 GibhubID] 를 등록하고 접속을 알립니다. 
@@ -74,11 +80,12 @@ Circuit에 있는 어떤 노드도 Sender가 데이터의 출처가 되는 노�
 일련의 전송과정으로 네트워크에서는 네트워크에서는 메시지의 송신자, 수신자의 익명성이 보장되며  
 암호화된 파일을 안전하게 전송할 수 있습니다.   
        
+	   
+-----
                   
 
 # Work Distribution
 
------
 | Name             | Role                     |
 |------------------|--------------------------|
 | Jiwon Choi       | db Server & db Client    |
@@ -86,9 +93,4 @@ Circuit에 있는 어떤 노드도 Sender가 데이터의 출처가 되는 노�
 | Mincheol son     | Manage PGP key & protorol|
 | Dauren serkeshev | protocol, Create docker  |
 
-
-2018-03-23
-2018-03-24
-2018-03-25
-2018-03-26
 

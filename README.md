@@ -23,7 +23,7 @@
 
 
 # Onion Protocol
-![Onion](https://en.wikipedia.org/wiki/File:Onion_diagram.svg)
+![Onion](https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Onion_diagram.svg/1200px-Onion_diagram.svg.png)
 Onion 은 연속적인 암호화 레이어로 메시지를 "포장"하여 형성된 데이터 구조입니다.  
 
 이러한 데이터는 목적지에 도달하기 전에 다수의 중간 컴퓨터에 의해 암호가 해독됩니다.  

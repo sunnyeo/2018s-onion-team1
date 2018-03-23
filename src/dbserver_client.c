@@ -10,15 +10,24 @@
 
 
 /*
-int download_pubkey(){
-	// wget같은걸로 ID에해당하는 키들을 모두다운로드한다
+[TODO] githubId를 입력받아서, 서버에서 pub파일을 다운받는 함수
+
+int download_pubkey(char *githubId){
+	// 깃허브 서버에서 githubId에 해당하는 키들을 로컬로 다운로드한다. (wget 같은걸 이용하면 될것같아요)
+	// 키 경로 : https://github.com/KAIST-IS521/2018-Spring/blob/master/IndividualKeys/[githubId.pub]
 }
 
 
-int register_key(){
-	// 얻어온 키들을 모두 등록한다
-}
-*/
+[TODO] githubId.pub이 있는 상태에서, 그 키를 import하는 함수
+
+int register_key(char *githubId){
+	// 로컬에 현재 [githubId.pub]에 있는 상태에서, 그 키를 등록한다. 
+	
+	// 키를 등록하는 커멘드 명령어는 아래를 참고
+	Laura$ gpg --import hansh17.pub 
+
+	}
+	*/
 
 int main(int argc, char *argv[]){
 		

@@ -23,11 +23,15 @@
 
 
 # Onion Protocol
-<imb src = "https://en.wikipedia.org/wiki/File:Onion_diagram.svg">
+![Onion](https://en.wikipedia.org/wiki/File:Onion_diagram.svg)
 Onion 은 연속적인 암호화 레이어로 메시지를 "포장"하여 형성된 데이터 구조입니다.  
+
 이러한 데이터는 목적지에 도달하기 전에 다수의 중간 컴퓨터에 의해 암호가 해독됩니다.  
-원래 메시지는 한 노드에서 다음 노드로 전송 될 때 암호화 되어 전송됩니다. 
-Circuit에 있는 어떤 노드도 Sender가 데이터의 출처가 되는 노드인지 아니면 다른 중개자 노드인지 알 수 없습니다.
+
+원래 메시지는 한 노드에서 다음 노드로 전송 될 때 암호화 되어 전송됩니다.  
+
+Circuit에 있는 어떤 노드도 Sender가 데이터의 출처가 되는 노드인지 아니면 다른 중개자 노드인지 알 수 없습니다.  
+
 
 
 # Protocol

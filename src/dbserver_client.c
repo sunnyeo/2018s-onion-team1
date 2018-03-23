@@ -26,9 +26,9 @@ int register_key(char *githubId){
 	// 키를 등록하는 커멘드 명령어는 아래를 참고
 	// Laura$ gpg --import hansh17.pub 
 
-    char cmd[40];
+    char cmd[BUFF_SIZE];
 
-    sprintf(cmd, "gpg --import %s.pub", githubId);
+    snprintf(cmd, BUFF_SIZE,  "gpg --import %s.pub", githubId);
     system(cmd);
 }
 	

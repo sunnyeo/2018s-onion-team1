@@ -2,13 +2,11 @@
 #include 	<stdio.h>
 #include 	<stdlib.h>
 #include 	<fcntl.h>
-#include 	<stdlib.h>
 #include 	<signal.h>
 #include 	<sys/socket.h>
 #include 	<sys/file.h>
 #include 	<netinet/in.h>
-#include    <time.h>
-
+#include 	<time.h>
 
 
 int main(int argc, char *argv[]){

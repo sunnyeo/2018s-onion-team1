@@ -16,24 +16,26 @@ int download_pubkey(char *githubId){
 	// 깃허브 서버에서 githubId에 해당하는 키들을 로컬로 다운로드한다. (wget 같은걸 이용하면 될것같아요)
 	// 키 경로 : https://github.com/KAIST-IS521/2018-Spring/blob/master/IndividualKeys/[githubId.pub]
 }
+*/
 
-
-[TODO] githubId.pub이 있는 상태에서, 그 키를 import하는 함수
+// [TODO] githubId.pub이 있는 상태에서, 그 키를 import하는 함수
 
 int register_key(char *githubId){
 	// 로컬에 현재 [githubId.pub]에 있는 상태에서, 그 키를 등록한다. 
 	
 	// 키를 등록하는 커멘드 명령어는 아래를 참고
-	Laura$ gpg --import hansh17.pub 
+	// Laura$ gpg --import hansh17.pub 
+    char cmd[40];
 
-	}
-	*/
+    sprintf(cmd, "gpg --import %s.pub", githubId);
+    system(cmd);
+}
+	
 
 int main(int argc, char *argv[]){
 		
 	//addUser("127.0.0.1", 12345, "eternalklaus");
 	//addUser("127.0.0.1", 12345, "hansh");
-
    int   client_socket;
 
    struct sockaddr_in   server_addr;
@@ -68,4 +70,4 @@ int main(int argc, char *argv[]){
 }
 
 
-	
+	    

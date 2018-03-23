@@ -5,19 +5,23 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#define  BUFF_SIZE   102
+#define  BUFF_SIZE   1000
 #define _CRT_SECURE_NO_WARNINGS    // strtok 보안 경고로 인한 컴파일 에러 방지
 
 
 
 char *Userlist(){
-	// !userlist <- 이걸입력하면 printUserlist호출됨
-	// 현재접속한 유저리스트정보를 리턴한다. 
-	// run_dbserver를통해 보낼수있음
+	char *userlist[BUFF_SIZE+5];
+	// @userlist <- 이걸입력하면 Userlist가 호출됩니다. 
+	// 현재접속한 유저리스트정보를 리턴한다.
+	
+	// OnionDB 읽어오고 결과를 리턴한다
+	
+	
 }
 
 
-//성공시 1반환, 실패시0반환
+
 int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
 	// OnionUser.db 에 str 한줄 추가
 
@@ -26,9 +30,11 @@ int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
 	sprintf(command, "sed -i '1i%s' %s", IpPortGithubId ,"OnionUser.db"); 
 	printf("addUser command : %s\n", command);
 	system(command);
+	
+	return 1; 
 }
 
-//성공시 1반환, 실패시0반환
+
 int deleteUser(char *githubID){
 	char command[100];
 	
@@ -37,13 +43,13 @@ int deleteUser(char *githubID){
 	printf("deleteUser command : %s\n", command);
 	system(command);
 	
-
+	return 1;
 }
 
 
 // usage : run_dbserver(12345)
 // dbserver는 내부적으로 OnionUser.db 라는 파일을 운용한다. 
-// OnionUser.db 는 사용자들의 IP, port, GithubID엔트리들을 저장하는 데이터베이스 파일이다. 
+//                    OnionUser.db 는 사용자들의 IP, port, GithubID엔트리들을 저장하는 데이터베이스 파일이다. 
 int run_dbserver(int dbserver_port){ // [TODO] add 
    int   server_socket;
    int   client_socket;
@@ -94,22 +100,30 @@ int run_dbserver(int dbserver_port){ // [TODO] add
       printf("receive: %s\n", buff_rcv);
       
 	  
-	  if (!strncmp(buff_rcv,"@adduser",strlen("@adduser"))){ // ex) @register ip port githubID 
-         addUser(buff_rcv+strlen("@adduser")+1);// 한줄을몽땅 파일에 추가...
-		 printf("파일에 추가함\n");
+	  // [TODO] 명령어 전송할 때 ""으로 감싸서 보내기
+	  // 서버로의 커멘드 처리 부분
+	  if (!strncmp(buff_rcv,"@adduser",strlen("@adduser"))){       // ex) @adduser ip port githubID 
+         addUser(buff_rcv+strlen("@adduser")+1);                 
+		 printf("[DBSERVER] 환영합니다!\n[DBSERVER] %s\n",buff_rcv+strlen("@adduser")+1); // 서버 프린트
+		 sprintf(buff_snd, "[DBSERVER] 환영합니다!\n[DBSERVER] %s\n",buff_rcv+strlen("@adduser")+1); // 유저 프린트
 	  }
 	  
 	  if (!strncmp(buff_rcv,"@deleteuser",strlen("@deleteuser"))){ // ex) @deleteuser githubID 
-         if(deleteUser(buff_rcv+strlen("!deleteuser")+1))
-			 printf("%s : 성공적으로 삭제했다!\n", buff_rcv+sizeof("@deleteuser")+1);
-		 else
-			 printf("그런 이름의 유저는 존재하지 않는다...\n");
+          deleteUser(buff_rcv+strlen("@deleteuser")+1);
+		  printf("[DBSERVER] Username : %s 가 현재 접속리스트에서 제거됩니다. \n",buff_rcv+sizeof("@deleteuser"));  // 서버 프린트 ... buff_rcv+sizeof("@deleteuser")+1 하면 왜 짤리지?
+		  sprintf(buff_snd, "[DBSERVER] Username : %s 가 현재 접속리스트에서 제거됩니다. \n", buff_rcv+sizeof("@deleteuser")); // 유저 프린트
+		 
 	  }
 	  
-      sprintf(buff_snd, "%d : %s", strlen(buff_rcv), buff_rcv);
+	  if (!strncmp(buff_rcv,"@userlist",strlen("@userlist"))){
+         sprintf(buff_snd, "%d : %s", strlen(Userlist()), Userlist());
+	  }
+   
+   
    
 	  // 클라이언트에게 보내는 서버의 메시지...
 	  write(client_socket, buff_snd, strlen(buff_snd)+1);          // +1: NULL까지 포함해서 전송
+	  
       close(client_socket);
    }
 }

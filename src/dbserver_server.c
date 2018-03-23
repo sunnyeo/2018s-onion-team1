@@ -5,22 +5,26 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#define  BUFF_SIZE   1000
+#include <sys/stat.h>
+#include <fcntl.h>
+#define  BUFF_SIZE   1024
+
 #define _CRT_SECURE_NO_WARNINGS    // strtok 보안 경고로 인한 컴파일 에러 방지
 
 
 
-char *Userlist(){
-	char *userlist[BUFF_SIZE+5];
-	// @userlist <- 이걸입력하면 Userlist가 호출됩니다. 
-	// 현재접속한 유저리스트정보를 리턴한다.
+char *Userlist(){ // @userlist <- 이걸입력하면 Userlist가 호출됨. OnionUser.db를 로컬에 다운로드받음. 
+	   // 우선 데이터를 읽어서 전송만 해준다. 
+	   // 그러고나서 클라이언트측에서는 전송된데이터를바탕으로 파일을생성한다. 그건클라이언트에구현함
 	
-	// OnionDB 읽어오고 결과를 리턴한다
-	
-	
+	   // OnionUser.db file open and read
+	   char *buff[BUFF_SIZE];
+	   int fd;
+	   fd=open("OnionUser.db",O_RDONLY);// 읽어온 buff를 파일에 저장
+	   read(fd,buff,BUFF_SIZE);
+	   close(fd);
+	   return buff;
 }
-
-
 
 int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
 	// OnionUser.db 에 str 한줄 추가
@@ -116,13 +120,12 @@ int run_dbserver(int dbserver_port){ // [TODO] add
 	  }
 	  
 	  if (!strncmp(buff_rcv,"@userlist",strlen("@userlist"))){
-         sprintf(buff_snd, "%d : %s", strlen(Userlist()), Userlist());
+         sprintf(buff_snd, "%s", Userlist()); 
 	  }
+
    
-   
-   
-	  // 클라이언트에게 보내는 서버의 메시지...
-	  write(client_socket, buff_snd, strlen(buff_snd)+1);          // +1: NULL까지 포함해서 전송
+	  //클라이언트 소켓에 메시지 전송
+	  write(client_socket, buff_snd, strlen(buff_snd)+1);          // +1: NULL까지 포함해서 전송.
 	  
       close(client_socket);
    }

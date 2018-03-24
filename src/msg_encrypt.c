@@ -41,9 +41,36 @@ root@ubuntu:~/tmp
 
 */
 
-int m("")
+int file_encrypt(char *filename){
+	
+}
 
 
+/*
+첫번째시도
+Laura$ gpg --import hansh17.pub 
+gpg: key 6DBC89AE: public key "Seongho Han (SH) <hansh09@kaist.ac.kr>" imported
+gpg: Total number processed: 1
+gpg:               imported: 1  (RSA: 1)
+gpg: 3 marginal(s) needed, 1 complete(s) needed, PGP trust model
+gpg: depth: 0  valid:   1  signed:   0  trust: 0-, 0q, 0n, 0m, 0f, 1u
+Laura$ 
+
+두번째시도
+Laura$ gpg --import hansh17.pub 
+gpg: key 6DBC89AE: "Seongho Han (SH) <hansh09@kaist.ac.kr>" not changed
+gpg: Total number processed: 1
+gpg:              unchanged: 1
+
+"gpg: key" 문자열 다음으로 파싱해오면될것같은데...
+*/
+
+// ex) 로컬에 hansh17.pub 파일이 있는 상태에서, publickey 문자열(6DBC89AE)을 리턴하는 함수
+char get_key(char *githubID){
+	char *publickey;
+	// [TODO] 
+	return publickey;
+}
 
 
 

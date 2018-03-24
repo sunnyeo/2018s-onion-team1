@@ -8,10 +8,12 @@
 
 #include <arpa/inet.h> /* For htonl() */
 
-
-// 그럼 키를 register 한 상태에서, 그 상대방의 키를 이용해서 
+// 키를 register 한 상태에서, 그 상대방의 키를 이용해서 
 // 로컬에 있는 testfile.txt를 암호화하는 함수 
 // 로컬에서 testfile.txt를 암호화해서 testfile_encrypt.txt 파일을 만드는 함수
+
+// gpg --import FileName
+// 해서 키 임폴트해오고 gpg --recipient bob --encrypt filename 로 할 수 있습니다. 
 int msgfile_encrypt(파일이름, 상대방의 githubID){
 // 민철님 구현 부탁드려요~
 }

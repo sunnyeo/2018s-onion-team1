@@ -12,8 +12,8 @@
    
    1. OnionMessenger 에 오신걸 환영합니다! 유저이름을 입력해 주세요! : eternalklaus
    [isValidGithubID] // 유저이름이 서버에 있는이름인지 검증
-	  - 그런 유저이름은 존재하지 않습니다...
-	  - 유저이름이 유효합니다
+	  - NO ) 그런 유저이름은 존재하지 않습니다...
+	  - YES)  유저이름이 유효합니다
 	    [isAuthedUser] // 로그인을 시도합니다.
 		- 로그인 성공 -------------------------------2로
 		- 로그인 실패 -------------------------------종료
@@ -35,14 +35,22 @@
  
 */
 
+// 스레드 2개 !! - 받는얘가 백그라운드 스레드!
 
 
-int isValidGithubID(char *githubID){
-	// 성호님 구현
-	return 1;
+
+// 만약 깃허브의 IndividualKey 폴더에 해당 유저가 있다면 1 리턴, 없다면 0을 리턴합니다. 
+// developer : hansh09
+int isValidGithubID(char *githubId){
+	char *url = "https://github.com/KAIST-IS521/2018-Spring/blob/master/IndividualKeys/";
+	snprintf(cmd, BUFF_SIZE, "wget --spider --timeout=1 %s%s.pub", url, githubId);
+	if(!system(cmd))
+	{
+		return 1;
+	}
+	else
+		return 0;
 }
-
-
 
 
 int main(int argc, char *argv[]){
@@ -50,6 +58,7 @@ int main(int argc, char *argv[]){
 	int port;
 	srand(time(NULL));
 	port = 40000+rand()%10000; // randomly selected port : 40000~50000
+
 	if (argc!=3){
 		printf("[USAGE] ./OnionMessenger [IP] [githubID]\n");
 		exit(1);

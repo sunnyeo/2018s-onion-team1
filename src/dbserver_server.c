@@ -40,7 +40,7 @@ int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
 	return 1; 
 }
 
-
+// @deleteuser
 int deleteUser(char *githubID){
 	char command[100];
 	
@@ -51,7 +51,6 @@ int deleteUser(char *githubID){
 	
 	return 1;
 }
-
 
 // [TODO] : 주기적으로 OnionUser 목록에 있는 IP에다가 쿼리날려서, 유저가 살아있는지 죽어있는지 확인해야 함!
 int run_dbserver(int dbserver_port){

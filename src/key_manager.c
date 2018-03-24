@@ -49,7 +49,6 @@ int register_private_key(char *privfile){
 }
 
 
-
 // 로컬에 [사용자이름].pub가 있을 때 사용자의 key ID를 리턴한다.
 // developer : Dauren
 char *get_pubkey(char *githubID){
@@ -91,7 +90,6 @@ char *get_pubkey(char *githubID){
 	return pubkey_id;
 
 }
-
 
 
 // 현재 머신이 githubId의 것인지 검증한다.

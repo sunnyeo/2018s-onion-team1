@@ -8,11 +8,27 @@
 #include 	<netinet/in.h>
 #include 	<time.h>
 
-	// 내부적으로 dbclient_client의 함수를 호출해주는 경우
-	// ex) OnionMessenger를 실행하면 자동으로 addUser_sendcommand()호출
-	//     OnionMessenger를 실행하고나서 update_userlist를 사용자가 입력하면 Userlist_sendcommand()호출
-    //     OnionMessenger를 종료하면 자동으로 deleteUser_sendcommand()호출
-	
+/*
+   getchar으로 유저인풋을 받아서
+   1: 유저 로그인시도
+      Github ID 을 입력해 주세요 : eternalklaus
+	  - 그런 유저이름은 존재하지 않습니다...
+	  - 로그인 성공
+	  
+   2: 유저 목록확인
+   3. 전송 기능
+      1. 전송대상 유저 선택
+	  2. 전송대상 파일 선택
+	  3. 전송하시겠습니까? yes/no
+	  4. exit
+   4. 엑스트라 기능
+      1. 유저 숨기기
+	  2. 
+   5. 유저 로그아웃 - 유저 삭제, pub파일삭제, .tmp파일들 삭제
+ 
+*/
+
+
 int main(int argc, char *argv[]){
 
 	int port;

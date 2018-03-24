@@ -5,41 +5,20 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+
 #define  BUFF_SIZE   1024
 
 
-/*
-[TODO] githubId를 입력받아서, 서버에서 pub파일을 다운받는 함수
 
-int download_pubkey(char *githubId){
-	// 깃허브 서버에서 githubId에 해당하는 키들을 로컬로 다운로드한다. (wget 같은걸 이용하면 될것같아요)
-	// 키 경로 : https://github.com/KAIST-IS521/2018-Spring/blob/master/IndividualKeys/[githubId.pub]
-}
-
-
-[TODO] githubId.pub이 있는 상태에서, 그 키를 import하는 함수
-
-int register_key(char *githubId){
-	// 로컬에 현재 [githubId.pub]에 있는 상태에서, 그 키를 등록한다. 
-	
-	// 키를 등록하는 커멘드 명령어는 아래를 참고
-	Laura$ gpg --import hansh17.pub 
-
-	}
-*/
-
-
-
+// deleteUser
 
 int dbserver_sendcommand(char *command){
    int   client_socket;
    struct sockaddr_in   server_addr;
    char   buff[BUFF_SIZE+5];
    int    fd;
-
-
 
    client_socket  = socket( PF_INET, SOCK_STREAM, 0);
    if( -1 == client_socket)
@@ -74,12 +53,11 @@ int dbserver_sendcommand(char *command){
    return 0;
 }
 
+
+
 int main(int argc, char *argv[]){
-	
+		
 	dbserver_sendcommand(argv[1]);
-	//addUser("127.0.0.1", 12345, "eternalklaus");
-	//addUser("127.0.0.1", 12345, "hansh");
-    
 }
 
 

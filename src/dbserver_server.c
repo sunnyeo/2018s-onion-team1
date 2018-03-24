@@ -1,3 +1,8 @@
+// @userlist
+// @adduser "192.168.0.1 2222 eternalklaus"
+// @deleteuser eternlaklaus
+// 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,25 +18,22 @@
 
 
 
-char *Userlist(){ // @userlist <- 이걸입력하면 Userlist가 호출됨. OnionUser.db를 로컬에 다운로드받음. 
-	   // 우선 데이터를 읽어서 전송만 해준다. 
-	   // 그러고나서 클라이언트측에서는 전송된데이터를바탕으로 파일을생성한다. 그건클라이언트에구현함
-	
-	   // OnionUser.db file open and read
+// @usetlist
+char *Userlist(){ // 이걸 호출한 유저는 OnionUser.db를 로컬에 다운로드받아햐 함. 
 	   char *buff[BUFF_SIZE];
 	   int fd;
-	   fd=open("OnionUser.db",O_RDONLY);// 읽어온 buff를 파일에 저장
+	   fd=open("OnionUser.db",O_RDONLY);
 	   read(fd,buff,BUFF_SIZE);
 	   close(fd);
 	   return buff;
 }
 
+// @adduser
 int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
-	// OnionUser.db 에 str 한줄 추가
-
+    // OnionUser.db 에 str 한줄 추가
 	// 첫줄에 라인 추가 : sed -i '1itask goes here' lll.txt
 	char command[100];
-	sprintf(command, "sed -i '1i%s' %s", IpPortGithubId ,"OnionUser.db"); 
+	sprintf(command, "sed -i '1i%s ' %s", IpPortGithubId ,"OnionUser.db");  
 	printf("addUser command : %s\n", command);
 	system(command);
 	
@@ -43,7 +45,7 @@ int deleteUser(char *githubID){
 	char command[100];
 	
 	//sed -i '/eternalklaus/d' aaa.txt 
-	sprintf(command, "sed -i '/%s/d' %s", githubID ,"OnionUser.db"); 
+	sprintf(command, "sed -i '/ %s /d' %s", githubID ,"OnionUser.db"); //추가띄어쓰기
 	printf("deleteUser command : %s\n", command);
 	system(command);
 	
@@ -51,10 +53,8 @@ int deleteUser(char *githubID){
 }
 
 
-// usage : run_dbserver(12345)
-// dbserver는 내부적으로 OnionUser.db 라는 파일을 운용한다. 
-//                    OnionUser.db 는 사용자들의 IP, port, GithubID엔트리들을 저장하는 데이터베이스 파일이다. 
-int run_dbserver(int dbserver_port){ // [TODO] add 
+// [TODO] : 주기적으로 OnionUser 목록에 있는 IP에다가 쿼리날려서, 유저가 살아있는지 죽어있는지 확인해야 함!
+int run_dbserver(int dbserver_port){
    int   server_socket;
    int   client_socket;
    int   client_addr_size;
@@ -114,24 +114,25 @@ int run_dbserver(int dbserver_port){ // [TODO] add
 	  
 	  if (!strncmp(buff_rcv,"@deleteuser",strlen("@deleteuser"))){ // ex) @deleteuser githubID 
           deleteUser(buff_rcv+strlen("@deleteuser")+1);
-		  printf("[DBSERVER] Username : %s 가 현재 접속리스트에서 제거됩니다. \n",buff_rcv+sizeof("@deleteuser"));  // 서버 프린트 ... buff_rcv+sizeof("@deleteuser")+1 하면 왜 짤리지?
+		  printf("[DBSERVER] Username : %s 가 현재 접속리스트에서 제거됩니다. \n",buff_rcv+sizeof("@deleteuser"));  // 서버 프린트  (buff_rcv+sizeof("@deleteuser")+1 하면 왜 짤리지?)
 		  sprintf(buff_snd, "[DBSERVER] Username : %s 가 현재 접속리스트에서 제거됩니다. \n", buff_rcv+sizeof("@deleteuser")); // 유저 프린트
 		 
 	  }
 	  
 	  if (!strncmp(buff_rcv,"@userlist",strlen("@userlist"))){
          sprintf(buff_snd, "%s", Userlist()); 
+		 // 유저측에서는 파일 다운로드 후 저장 - dbserver_client.c 에 구현됨
 	  }
 
-   
 	  //클라이언트 소켓에 메시지 전송
-	  write(client_socket, buff_snd, strlen(buff_snd)+1);          // +1: NULL까지 포함해서 전송.
-	  
+	  write(client_socket, buff_snd, strlen(buff_snd)+1);  
       close(client_socket);
+	  
+	  
    }
 }
 
 int main()
 {
-	run_dbserver(4000);
+	run_dbserver(4000); .// 4000번포트사용
 }

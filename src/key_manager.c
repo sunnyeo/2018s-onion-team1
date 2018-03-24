@@ -10,7 +10,8 @@
 
 #define  BUFF_SIZE   1024
 
-
+// 서버로부터 [githubId.pub]를 다운받는다.
+// developer : hansh09
 int download_pubkey(char *githubId){
         char *url = "https://raw.githubusercontent.com/KAIST-IS521/2018-Spring/master/IndividualKeys/";
 		char cmd[BUFF_SIZE];
@@ -26,6 +27,7 @@ int download_pubkey(char *githubId){
 		}
 	return 0;	
 }
+
 
 // 로컬에 현재 [githubId.pub]에 있는 상태에서, 그 키를 등록한다. 
 // developer : MincheolSon
@@ -47,40 +49,91 @@ int register_private_key(char *privfile){
 }
 
 
-// [TODO]
-// ex) 로컬에 hansh17.pub 파일이 있는 상태에서, publickey 문자열(6DBC89AE)을 리턴하는 함수
-char get_pubkey(char *githubID){
-	/*
-    첫번째시도
-    Laura$ gpg --import hansh17.pub 
-    gpg: key 6DBC89AE: public key "Seongho Han (SH) <hansh09@kaist.ac.kr>" imported
-    gpg: Total number processed: 1
+
+// 로컬에 [사용자이름].pub가 있을 때 사용자의 key ID를 리턴한다.
+// developer : Dauren
+char *get_pubkey(char *githubID){
+
+    char cmd[BUFF_SIZE];
+	int i;
+	FILE *f;
+	char c;
+	char *pubkey_id = (char*)malloc(9);
+	
+    snprintf(cmd, BUFF_SIZE, "sudo gpg %s\.pub > KeyId.txt",githubID);
+    //create the file containing the KeyId of user githubId
+    system(cmd);
+    f = fopen("KeyId.txt", "r");
     
-    두번째시도
-    Laura$ gpg --import hansh17.pub 
-    gpg: key 6DBC89AE: "Seongho Han (SH) <hansh09@kaist.ac.kr>" not changed
-    
-    "gpg: key" 문자열 다음으로 파싱해오면될것같은데...
-    */
-	char *publickey; 
-	return publickey;
+
+    if(fgetc(f) == EOF) //if file is empty it means that user is not registered
+    {
+        printf("User %s is not registered yet\n", githubID);
+        return 0;
+    }
+    // get the user's KeyId from KeyId.txt file
+    // file format is as following
+    // pub  <size of key>/<key id> <creation date> <user name> <email>
+	//      ex) pub  2048R/EDE8D438 2018-03-22 jiwon choi (Second gpg key....) <jiwon.choi@kaist.ac.kr>
+    // we only need <key id> part
+
+    for(i=0;;c = fgetc(f))
+    {
+        if(c == '/')
+        {
+            while((c=fgetc(f)) != ' ')
+                pubkey_id[i++] = c;
+            pubkey_id[i] = '\0';
+            break;
+        }
+    }
+	snprintf(cmd,1000,"sudo rm KeyId.txt");
+	return pubkey_id;
+
 }
 
 
-// 그리고 메신저에서 eternalklaus 본인인지 아닌지 확인하는 부분도 넣기
-int auth_user(char *githubId){
-	// ex) hansh17 을 입력했을 때, 
-	//     현재 머신에 hansh17의 private key가 등록된 상태라면? ---> 본인인증 성공(1리턴)
-	//     현재 머신에 다른사람의  private key가 등록된 상태라면? ---> 본인인증 실패(0리턴)
-}
 
+// 현재 머신이 githubId의 것인지 검증한다.
+// deveopler : Dauren
+int auth_user(char *githubId){ 
+
+
+    char cmd[BUFF_SIZE];
+	int i;
+	FILE *f;
+	char a[9],c;
+
+	// 사전에 반드시 자신의 public key도 로컬에 있어야 한다. 
+	download_pubkey(githubId);
+	
+    // now key id of user is stored in *a
+    snprintf(cmd, 1000, "sudo gpg --export-secret-keys -a %s > privateKey.txt",get_pubkey(githubId));
+
+    // check if the private key of user is stored on this machine
+    // If it is, then it will be saved in the privateKey.txt. Otherwise,
+    // this command will give warning and privateKey.txt will be empty
+
+    system(cmd);
+    f = fopen("privateKey.txt","r");
+    if(getc(f) == EOF)
+        return 0;
+    else
+    {
+        snprintf(cmd,1000,"sudo rm privateKey.txt"); //delete the privateKey file
+                                                    //before exiting this function
+        system(cmd);
+        return 1;
+    }
+}
 
 
 int main(int argc, char *argv[]){
-		
-	//addUser("127.0.0.1", 12345, "eternalklaus");
-	//addUser("127.0.0.1", 12345, "hansh");
+	// 테스트 코드들... 곧 지울것임
 	download_pubkey("eternalklaus");
 	
+	if(auth_user("eternalklaus"))
+		printf("이 머신은 eternalklaus의 것임\n");
+	printf("eternalklaus's public key %s\n",get_pubkey("eternalklaus"));
 	//dbserver_sendcommand(argv[1]);
 }

@@ -20,10 +20,10 @@
 
 // @usetlist
 char *Userlist(){ // 이걸 호출한 유저는 OnionUser.db를 로컬에 다운로드받아햐 함. 
-	   char *buff[BUFF_SIZE];
 	   int fd;
+	   char *buff = (char*)malloc(BUFF_SIZE); // [BUG PATCH]
 	   fd=open("OnionUser.db",O_RDONLY);
-	   read(fd,buff,BUFF_SIZE);
+	   read(fd,buff,BUFF_SIZE-1);
 	   close(fd);
 	   return buff;
 }

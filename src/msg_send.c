@@ -50,6 +50,8 @@ int msg_extract_relayinfo(char *filename, char **relay_ip, char **relay_port){
 }
 
 
+// 스레드 2개 !! - 받는얘가 백그라운드 스레드!
+
 
 // 파일을 받으려는 호스트 : nc -l 1234 > foo.txt
 // 파일을 보내려는 호스트 : nc 1.2.3.4 1234 < foo.txt

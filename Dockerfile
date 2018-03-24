@@ -5,6 +5,7 @@ FROM ubuntu
 WORKDIR /onion
 
 # Add the current directory contents into the container at /onion
+# User's private key is also transfered, since it is stored in the same directory with Dockerfile
 ADD . /onion
 
 # Don we need to install any dependicies?

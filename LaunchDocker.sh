@@ -1,2 +1,2 @@
 docker build -t OnionMessenger .
-docker run -it OnionMessenger
+docker run -it --rm OnionMessenger

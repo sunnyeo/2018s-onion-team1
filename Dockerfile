@@ -1,5 +1,5 @@
-# Use ubuntu as parent image
-FROM ubuntu
+# Use GCC compiler as a parent image
+FROM gcc:4.9
 
 # Set the working directory into the container at /onion
 WORKDIR /onion

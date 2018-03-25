@@ -57,14 +57,89 @@ int onion_showUserlist(){
 	// OnionUser.db.tmp 읽어서 화면에 뿌려줌... 우선은 printf 로만 구현해보자
 }
 
-char** onion_makeCircuit(int len){ // 192.168.1.124 4444 eternalklaus 의 문장으로구성된 문자열리스트를 리턴한다. 
-	// OnionUser.db.tmp를 읽는다.
-	// len개의 랜덤한 행을 선택한다.
+// 현재 로그인한사람들 Num을 리턴하는 함수
+int onion_getUsernum(){
+	FILE *fp;
+	fp = fopen("OnionUser.db.tmp","r");
+	int i=0;
+	char line[100];
+	if (fp == NULL){
+	   printf("유저목록이 없어서 못함. 하지만 유저목록이 없을리가 없지\n");
+	}
+	else{
+		while(!feof(fp)){ // 파일의 끝이 아니라면
+			fgets(line, 100, fp);
+			if(line[0]=='-')
+				break;    // end of OnionUser.db file
+			i++;
+		}
+	}
+	return i;
+}
+
+
+
+// len개의 circuit을 구성한다
+char** onion_makeCircuit(int len, char *sender_githubID, char *receiver_githubID){ // 192.168.1.124 4444 eternalklaus 의 문장으로구성된 문자열리스트를 리턴한다. 
+	FILE *fp;
+	char **lines; // 이걸 동적으로 할당하고 싶음......
+	char *line;
+	int i=0;
+	int linenum,usernum,sendernum,receivernum;
+	
+	
+	
+	usernum = onion_getUsernum();
+	fp = fopen("OnionUser.db.tmp", "r");
+	lines = (char**)malloc(sizeof(line) * len); // 3개짜리 스트링 리스트
+	
+	
+	if (fp == NULL){
+	   printf("유저목록이 없어서 못함. 하지만 유저목록이 없을리가 없지\n");
+	}
+	else{
+		linenum=1; //라인은 1에서 시작
+		while(!feof(fp)){
+			line = (char*)malloc(100); //동적으로 할당
+			fgets(line, 100, fp);
+			line[strlen(line)-1] = '\0';
+			if(strstr(line,sender_githubID)){
+				lines[0]=line;
+				sendernum=linenum;
+			}
+			if(strstr(line,receiver_githubID)){
+				lines[len-1]=line;
+				receivernum=linenum;
+			}
+			if(line[0]=='-')
+				break;
+			linenum++;
+		}
+		printf("sendernum : %d, receivernum : %d\n",sendernum, receivernum);
+		
+		
+		fseek(fp,0,SEEK_SET); //파일의 시작으로 되돌아온다.
+
+
+		// 1~num 중에 sendernum, receivernum 을 제외한
+		// num-2 개의 랜덤넘버를 저장
+		
+		randnum[num-2];
+		
+		sort(randnum);
+		
+		i=1;
+		while(!feof(fp)){
+			
+		}
+		
+	}
+	return lines;
 	
 }
 
 
-/*
+/* 프로토타입...
    1. OnionMessenger 에 오신걸 환영합니다! 유저이름과 passphrase을 입력해 주세요! : eternalklaus, [TODO] passphrase
    [isValidGithubID] : 유저이름이 서버에 있는이름인지 검증
 	   - NO )  그런 유저이름은 존재하지 않습니다...--------------종료
@@ -124,7 +199,6 @@ char** onion_makeCircuit(int len){ // 192.168.1.124 4444 eternalklaus 의 문장
 // 스레드 2개 !! - 받는얘가 백그라운드 스레드!
 
 
-
 // 만약 깃허브의 IndividualKey 폴더에 해당 유저가 있다면 1 리턴, 없다면 0을 리턴합니다. 
 // developer : hansh09
 int isValidGithubID(char *githubId){
@@ -182,7 +256,13 @@ char *getHostIP(char *interface){
 
 int main(int argc, char *argv[])
 {
-	onion_registerAllPubKey();
+	char **lines;
+	int i;
+
+	lines = onion_makeCircuit(3, "eternalklaus", "hansh17");
+	for(i=0;i<3;i++)
+		printf("%s-->",lines[i]);
+
 }
 
 /*

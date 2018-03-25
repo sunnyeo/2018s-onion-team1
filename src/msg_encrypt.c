@@ -32,9 +32,12 @@ int msgfile_encrypt(char *file_name, char *githubId){
     key=strncpy(key_temp, key+1, 15);
 
     pclose(import);
+
+    snprintf(cmd, 100, "gpg --armor --encrypt --recipient %s %s", key, file_name);
+
+    system(cmd);
+
     return 0;
 }
-
-
 
 

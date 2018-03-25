@@ -125,7 +125,7 @@ int auth_user(char *githubId){
     }
 }
 
-
+/*
 int main(int argc, char *argv[]){
 	// 테스트 코드들... 곧 지울것임
 	download_pubkey("eternalklaus");
@@ -135,3 +135,4 @@ int main(int argc, char *argv[]){
 	printf("eternalklaus's public key %s\n",get_pubkey("eternalklaus"));
 	//dbserver_sendcommand(argv[1]);
 }
+*/

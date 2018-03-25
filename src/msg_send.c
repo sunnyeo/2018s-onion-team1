@@ -40,7 +40,7 @@ int msg_read2shell(char *filename){
 
 // 파일을 받으려는 호스트 : nc -l 1234 > foo.txt
 // 파일을 보내려는 호스트 : nc 1.2.3.4 1234 < foo.txt
-int msg_send(char *filename, char* relay_ip, int relay_port){ 
+int msg_send(char *filename, char* relay_ip, int relay_port){  // [TODO] 만약에 릴레이대상 ip, port가 없어? 그러면 걍 파일삭제... 
 	char command[100];
 	sprintf(command, "nc %s %d < %s", relay_ip, relay_port, filename); 
 	printf("%s\n",command);

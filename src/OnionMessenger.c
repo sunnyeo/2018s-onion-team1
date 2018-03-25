@@ -17,11 +17,48 @@
 #include <string.h>
 
 #define  BUFF_SIZE   1024
+
+// OnionUser.db
+// 192.168.1.123 4444 hhhhaaa
+
+int onion_registerAllPubKey(){
+	FILE *fp;
+	char line[100];
+	char *githubID;
+	fp = fopen("OnionUser.db.tmp", "r");  // 파일 열기
+	int i=0;
+	
+	if (fp == NULL){
+	   printf("유저목록이 없어서 못함. 하지만 유저목록이 없을리가 없지\n");
+	}
+	else{
+		while(!feof(fp)){ // 파일의 끝이 아니라면
+			fgets(line, 100, fp);
+			if(line[0]=='-')
+				break;    // end of OnionUser.db file	
+			printf("%s",line);
+			
+			githubID = strchr(line, ' ')+1;
+			githubID = strchr(githubID, ' ')+1;
+			
+			
+			// printf("size : %d /// %s\n",sizeof(githubID),githubID);
+			// 엔터 제거
+			//githubID[sizeof(githubID)-1] = '\0';
+			
+			printf("%s\n",githubID);
+			//key_manager.c 에서 가져옴
+			download_pubkey(githubID);
+			register_pubkey(githubID);
+		}
+	}
+	return 0;
+}
 /*
    
    1. OnionMessenger 에 오신걸 환영합니다! 유저이름을 입력해 주세요! : eternalklaus
    [isValidGithubID] : 유저이름이 서버에 있는이름인지 검증
-	   - NO )  그런 유저이름은 존재하지 않습니다...
+	   - NO )  그런 유저이름은 존재하지 않습니다...--------------종료
 	   - YES)  유저이름이 유효합니다
 	          [isAuthedUser] : 로그인을 시도합니다.
 		      - 로그인 성공 -------------------------------2로
@@ -30,22 +67,46 @@
    
 	
    2. 성공적으로 로그인 하였습니다!
+      2.1 자동으로 서버에 githubID, IP, port 등록하기  : dbserver_sendcommand("@adduser IP Port GithubID")
+      2.2 자동으로 서버에서 유저목록 가져와서 저장하기      : dbserver_sendcommand("@userlist")  (참고. OnionUser.db.tmp 가 로컬에 저장됨)
+	  2.3 자동으로 유저목록들 키를 모두 등록하기           : [TODO] OnionUser.db.tmp 유저목록들 모두 돌려서 download_pubkey호출하고 register_pubkey를 호출해가지고 등록...
+   
+	
    while(1)   
-     1. 유저 목록확인
-     2. send 기능
-       1. 전송대상 유저 선택
-	   2. 전송대상 파일 선택
-	   3. 전송하시겠습니까? yes/no
-	   4. exit
-	 3. recv 기능
-	   case1 : 전송받은 파일이 final이 아닐때 : 다음사용자에게 relay
-	   case2 : 전송받은 파일이 final일때 :
-	           1. text일때 : 읽어서 화면에 뿌려주고 파일은 삭제
-			   2. file일때 : 읽어서 화면에 "[파일이름]이 도착하였습니다!" 를 뿌려줌.
-     3. 엑스트라 기능
-       1. 유저 숨기기
+	 3. 대기중..............대기할때 주기적으로 유저목록 갱신
+        nc로 리쓰닝중........
+     
+	 4. 유저 목록 보여주는 기능 (이거호출할때 목록 자동 업데이트함. 그래서 사람이 직접 업데이트할필요 없음)
+        2.2 ㅇㅇ
+		2.3 ㅇㅇ
+	    4.1 [TODO] 그냥 단순히 로컬에있는 OnionUser.db.tmp 읽어서 화면에 뿌려줌
+	 5. send 기능
+	   5.0 유저 목록 갱신
+	       2.2 ㅇㅇ
+		   2.3 ㅇㅇ
+       5.1 전송대상 유저의 GithubID를 입력해 주세요 : eternalklaus
+	   5.2 전송대상 파일 선택
+	       5.2.1 파일이 있는 경우 : 파일선택 완료.
+		   5.2.2 파일이 없는 경우 : 다시 입력해 주세요!
+		         GOTO 5.2
+	   5.3 전송하시겠습니까? yes/no
+	       5.3.1 yes
+		         [TODO] OnionUser.db.tmp 에서 Circuit 구성 (ex. A->C->B)
+				 메시지 포장 포장 포장...
+				 메시지 전송
+				 GOTO 3 ([TODO] 메시지가 잘 도착했는지 아닌지 receiver가 응답줘야함... 헤더가 success인 파일을 답변으로 보낼까?)
+		   5.3.2 no
+		         GOTO 3
+	 6. recv 기능
+	    6.1 nc로 데이터가 하나 배달된 경우
+		6.2 final이 아닌경우 - 다음사용자에게 relay 
+		6.3 final인    경우 - 
+	        6.3.1. text일때 : 읽어서 화면에 뿌려주고 파일은 삭제
+			6.3.2. file일때 : 읽어서 화면에 "[파일이름]이 도착하였습니다!" 를 뿌려줌.
+     7. 엑스트라 기능
+       1. 네트워크에서 유저 숨기기.. (유저가 네트워크 대역폭 짠돌이일경우?)
 	   2. 
-     4. 유저 로그아웃 - 유저 삭제, pub파일삭제, .tmp파일들 삭제
+     8. [TODO]유저 로그아웃 - 유저 삭제, pub파일삭제, .tmp파일들 삭제
  
 */
 // 스레드 2개 !! - 받는얘가 백그라운드 스레드!
@@ -68,7 +129,7 @@ int isValidGithubID(char *githubId){
 
 
 // 로그인시도하는 호스트의 IP를 리턴한다 
-// Usage : ipaddr = getHostIP("eth0");
+// Usage : char *ipaddr = getHostIP("eth0");
 char *getHostIP(char *interface){
 	struct ifaddrs *ifaddr, *ifa;
     int family, s;
@@ -105,17 +166,11 @@ char *getHostIP(char *interface){
 	return ret;
 }
 
-int trylogin(char *githubID){
-	
-	
-}
+
+
 int main(int argc, char *argv[])
 {
-	char *ipaddr;
-	ipaddr = getHostIP("eth0");
-	printf("%s",ipaddr);
-	
-	
+	onion_registerAllPubKey();
 }
 
 /*

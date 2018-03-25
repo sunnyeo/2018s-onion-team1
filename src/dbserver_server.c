@@ -16,7 +16,17 @@
 
 #define _CRT_SECURE_NO_WARNINGS    // strtok 보안 경고로 인한 컴파일 에러 방지
 
-
+// [TODO] Dauren, MincheolSon
+int isClientAlive(ClientIP, ClientPort){
+	// dbserver 는 주기적으로
+	// ClientIP:ClientPort 에 ping같은걸 때려서 Client가 살았나 죽었나 확인한다. 
+	// (ping말고도 더 깔끔한 다른방법이 있을것같아요.)
+	
+	if (ClientIP:ClientIP is alive)
+		return 1; 
+	else
+		return 0;  
+}
 
 // @userlist
 char *Userlist(){ // 이걸 호출한 유저는 OnionUser.db를 로컬에 다운로드받아햐 함. 

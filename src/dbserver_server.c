@@ -45,7 +45,7 @@ int deleteUser(char *githubID){
 	char command[100];
 	
 	//sed -i '/eternalklaus/d' aaa.txt 
-	sprintf(command, "sed -i '/ %s /d' %s", githubID ,"OnionUser.db"); //추가띄어쓰기
+	sprintf(command, "sed -i '/ %s/d' %s", githubID ,"OnionUser.db"); //추가띄어쓰기
 	printf("deleteUser command : %s\n", command);
 	system(command);
 	
@@ -102,8 +102,6 @@ int run_dbserver(int dbserver_port){
       read(client_socket, buff_rcv, BUFF_SIZE);
       printf("receive: %s\n", buff_rcv);
       
-	  
-	  // [TODO] 명령어 전송할 때 ""으로 감싸서 보내기
 	  // 서버로의 커멘드 처리 부분
 	  if (!strncmp(buff_rcv,"@adduser",strlen("@adduser"))){       // ex) @adduser ip port githubID 
          addUser(buff_rcv+strlen("@adduser")+1);                 
@@ -133,5 +131,5 @@ int run_dbserver(int dbserver_port){
 
 int main()
 {
-	run_dbserver(4000); .// 4000번포트사용
+	run_dbserver(4000); // 4000번포트사용
 }

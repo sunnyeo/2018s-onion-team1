@@ -107,9 +107,12 @@ char** onion_makeCircuit(int len, char *sender_githubID, char *receiver_githubID
 				lines[0]=line;
 				sendernum=linenum;
 			}
-			if(strstr(line,receiver_githubID)){
+			else if(strstr(line,receiver_githubID)){
 				lines[len-1]=line;
 				receivernum=linenum;
+			}
+			else{
+				free(line); //읽어온 라인 쓸모없음. 
 			}
 			if(line[0]=='-')
 				break;
@@ -117,20 +120,30 @@ char** onion_makeCircuit(int len, char *sender_githubID, char *receiver_githubID
 		}
 		printf("sendernum : %d, receivernum : %d\n",sendernum, receivernum);
 		
-		
 		fseek(fp,0,SEEK_SET); //파일의 시작으로 되돌아온다.
 
-
-		// 1~num 중에 sendernum, receivernum 을 제외한
-		// num-2 개의 랜덤넘버를 저장
+		
+		// 1~num 중에 sendernum, receivernum 을 제외하고
+		// [num-2] 개의 랜덤넘버를 뽑는다. 
 		
 		randnum[num-2];
 		
 		sort(randnum);
 		
 		i=1;
+		linenum=1;
 		while(!feof(fp)){
+			line = (char*)malloc(100);
+			fgets(line, 100, fp);
+			line[strlen(line)-1] = '\0';
 			
+			if(linenum == randnum[i]){
+				
+			}
+			else{
+				
+			}
+			linenum++;
 		}
 		
 	}
@@ -179,7 +192,7 @@ char** onion_makeCircuit(int len, char *sender_githubID, char *receiver_githubID
 	   5.3 전송하시겠습니까? yes/no
 	       5.3.1 yes
 		         [TODO] OnionUser.db.tmp 에서 Circuit 구성 (ex. A->C->B)
-				        메시지 포장 포장 포장...
+				        메시지 포장 포장 포장... [TODO] 메시지 암호화할때 현재 .enc, .asc 이런식으로 확장자가 붙는파일을 생성한다. [특정이름]을 정해두고, 암호화/복호화함수에서 그 [특정이름]을 리턴하도록 하면?
 				 메시지 전송
 				 GOTO 3 ([TODO] 메시지가 잘 도착했는지 아닌지 receiver가 응답줘야함... 헤더가 success인 파일을 답변으로 보낼까?)
 		   5.3.2 no

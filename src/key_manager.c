@@ -133,8 +133,7 @@ int  auth_passphrase(char *PGP_passphrase, char *mygithubId)
     char cmd[BUFF_SIZE];
     char *pub_key = get_pubkey(mygithubId);
     // first create some random file for encryption
-    snprintf(cmd, BUFF_SIZE, "sudo gpg --help > RandFile");
-    system(cmd);
+    system("gpg --help > RandFile");
     // then encrypt this file with mygithubId's public key
     snprintf(cmd, BUFF_SIZE, "sudo gpg -r %s --encrypt RandFile", pub_key);
     system(cmd);
@@ -146,8 +145,7 @@ int  auth_passphrase(char *PGP_passphrase, char *mygithubId)
               --decrypt RandFile.gpg > OutFile",PGP_passphrase, pub_key);
     system(cmd);
     // delete all of the created files to not the waste the memory
-    snprintf(cmd, BUFF_SIZE, "sudo rm RandFile.gpg");
-    system(cmd);
+    system("sudo rm RandFile.gpg");
     system("rm RandFile");
 
     FILE *f;

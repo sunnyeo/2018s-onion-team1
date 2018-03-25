@@ -24,12 +24,11 @@ char *msgfile_encrypt_auth(파일이름){
 	// 파일을 A자신의 프라이빗키로 암호화해서 보낸다. 
 }
 
-char *msgfile_dectypt(char *filename){
+int *msgfile_decrypt(char *filename){
 	// 상대방이 보낸파일(내 퍼블릭키로 암호화되어 있음)을
 	// 나의 private key로 복호화한다.
 	// 나는 경유자일수도, 아닐수도 있다. 우선은 복호화한다. 
 	
-	// 우선 이름은 랜덤스트링으로리턴한다. 나중에 이름 바꾸던가 해야지...
 	char cmd[BUFF_SIZE];
 	
 	snprintf(cmd, BUFF_SIZE, "gpg --passphrase %s --decrypt %s", passphrase, filename);

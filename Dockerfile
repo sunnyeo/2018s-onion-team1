@@ -1,5 +1,5 @@
 # Use GCC compiler as a parent image
-FROM gcc:4.9
+FROM ubuntu
 
 # Set the working directory into the container at /onion
 WORKDIR /onion
@@ -9,7 +9,9 @@ WORKDIR /onion
 ADD . /onion
 
 # Don we need to install any dependicies?
-# RUN install-dependencies
+RUN apt-get update
+RUN apt-get -y install gcc \
+                       netcat
 
-# Run the onion messenger using Makefile(not created yet)
+# Compile the onion messenger using Makefile(not created yet)
 CMD ["make"]

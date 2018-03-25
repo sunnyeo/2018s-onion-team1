@@ -25,14 +25,14 @@ int download_pubkey(char *githubId){
 			printf("%d",ret);
 			system(cmd);
 		}
-	return 0;	
+	return 0;
 }
 
 
-// 로컬에 현재 [githubId.pub]에 있는 상태에서, 그 키를 등록한다. 
+// 로컬에 현재 [githubId.pub]에 있는 상태에서, 그 키를 등록한다.
 // developer : MincheolSon
 int register_pubkey(char *githubId){
-	
+
     char cmd[BUFF_SIZE];
     snprintf(cmd, BUFF_SIZE,  "gpg --import %s.pub", githubId);
     system(cmd);
@@ -58,12 +58,12 @@ char *get_pubkey(char *githubID){
 	FILE *f;
 	char c;
 	char *pubkey_id = (char*)malloc(9);
-	
-    snprintf(cmd, BUFF_SIZE, "sudo gpg %s\.pub > KeyId.txt",githubID);
+
+    snprintf(cmd, BUFF_SIZE, "sudo gpg %s.pub > KeyId.txt",githubID);
     //create the file containing the KeyId of user githubId
     system(cmd);
     f = fopen("KeyId.txt", "r");
-    
+
 
     if(fgetc(f) == EOF) //if file is empty it means that user is not registered
     {
@@ -94,15 +94,15 @@ char *get_pubkey(char *githubID){
 
 // 현재 머신이 githubId의 것인지 검증한다.
 // deveopler : Dauren
-int auth_user(char *githubId){ 
+int auth_user(char *githubId){
     char cmd[BUFF_SIZE];
 	int i;
 	FILE *f;
 	char a[9],c;
 
-	// 사전에 반드시 자신의 public key도 로컬에 있어야 한다. 
+	// 사전에 반드시 자신의 public key도 로컬에 있어야 한다.
 	download_pubkey(githubId);
-	
+
     // now key id of user is stored in *a
     snprintf(cmd, 1000, "sudo gpg --export-secret-keys -a %s > privateKey.txt",get_pubkey(githubId));
 
@@ -125,12 +125,37 @@ int auth_user(char *githubId){
 
 
 // [TODO] Dauren
-// Check whether [PGP_passphrase] string is 
+// Check whether [PGP_passphrase] string is
 // match with PGP private key(which is registered in the machine) or not.
 // (If you need mygithubId, you can use it.)
-int  auth_passphrase(char *PGP_passphrase, char *mygithubId){
-	// if correct, return 1;
-	// else, return 0;
+int  auth_passphrase(char *PGP_passphrase, char *mygithubId)
+{
+    char cmd[BUFF_SIZE];
+    char *pub_key = get_pubkey(mygithubId);
+    // first create some random file for encryption
+    snprintf(cmd, BUFF_SIZE, "sudo gpg --help > RandFile");
+    system(cmd);
+    // then encrypt this file with mygithubId's public key
+    snprintf(cmd, BUFF_SIZE, "sudo gpg -r %s --encrypt RandFile", pub_key);
+    system(cmd);
+    // then try to decrypt the encrypted file with mygithubId's private key
+    // in order to do this we must pass mygithubId's passphrase
+    // If this passphrase is correct resultant OutFile will be identical to
+    // the RandFile, otherwise OutFile will be empty
+    snprintf(cmd, BUFF_SIZE, "echo %s | sudo gpg --passphrase-fd 0 -r %s \
+              --decrypt RandFile.gpg > OutFile",PGP_passphrase, pub_key);
+    system(cmd);
+    // delete all of the created files to not the waste the memory
+    snprintf(cmd, BUFF_SIZE, "sudo rm RandFile.gpg");
+    system(cmd);
+    system("rm RandFile");
+
+    FILE *f;
+    f = fopen("OutFile", "r");
+    if(fgetc(f) == EOF)
+        return 0;
+    else
+        return 1;
 }
 
 
@@ -140,10 +165,24 @@ int  auth_passphrase(char *PGP_passphrase, char *mygithubId){
 int main(int argc, char *argv[]){
 	// 테스트 코드들... 곧 지울것임
 	download_pubkey("eternalklaus");
-	
+
 	if(auth_user("eternalklaus"))
 		printf("이 머신은 eternalklaus의 것임\n");
 	printf("eternalklaus's public key %s\n",get_pubkey("eternalklaus"));
 	//dbserver_sendcommand(argv[1]);
 }
 */
+
+int main(int argc, char *argv[]){
+	// 테스트 코드들... 곧 지울것임
+  download_pubkey("Dauren2495");
+  if(auth_passphrase("Uni","Dauren2495"))
+        printf("Success\n");
+  else
+        printf("Fail\n");
+
+	//if(auth_user("eternalklaus"))
+	//	printf("이 머신은 eternalklaus의 것임\n");
+	//printf("eternalklaus's public key %s\n",get_pubkey("eternalklaus"));
+	//dbserver_sendcommand(argv[1]);
+}

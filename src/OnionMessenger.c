@@ -18,9 +18,8 @@
 
 #define  BUFF_SIZE   1024
 
-// OnionUser.db
-// 192.168.1.123 4444 hhhhaaa
 
+//OnionUser.db.tmp 에 있는 유저의 public key들을 모두 등록한다
 int onion_registerAllPubKey(){
 	FILE *fp;
 	char line[100];
@@ -41,26 +40,36 @@ int onion_registerAllPubKey(){
 			githubID = strchr(line, ' ')+1;
 			githubID = strchr(githubID, ' ')+1;
 			
-			
-			// printf("size : %d /// %s\n",sizeof(githubID),githubID);
 			// 엔터 제거
-			//githubID[sizeof(githubID)-1] = '\0';
-			
+			githubID[strlen(githubID)-1] = '\0';
 			printf("%s\n",githubID);
+			
 			//key_manager.c 에서 가져옴
 			download_pubkey(githubID);
 			register_pubkey(githubID);
 		}
+		printf("사용자 키 등록을 완료하였습니다\n");
 	}
 	return 0;
 }
+
+int onion_showUserlist(){
+	// OnionUser.db.tmp 읽어서 화면에 뿌려줌... 우선은 printf 로만 구현해보자
+}
+
+char** onion_makeCircuit(int len){ // 192.168.1.124 4444 eternalklaus 의 문장으로구성된 문자열리스트를 리턴한다. 
+	// OnionUser.db.tmp를 읽는다.
+	// len개의 랜덤한 행을 선택한다.
+	
+}
+
+
 /*
-   
-   1. OnionMessenger 에 오신걸 환영합니다! 유저이름을 입력해 주세요! : eternalklaus
+   1. OnionMessenger 에 오신걸 환영합니다! 유저이름과 passphrase을 입력해 주세요! : eternalklaus, [TODO] passphrase
    [isValidGithubID] : 유저이름이 서버에 있는이름인지 검증
 	   - NO )  그런 유저이름은 존재하지 않습니다...--------------종료
 	   - YES)  유저이름이 유효합니다
-	          [isAuthedUser] : 로그인을 시도합니다.
+	          [isAuthedUser] : 로그인을 시도합니다. + [TODO] passphrase 가 eternalklaus의 것인지 아닌지 검증
 		      - 로그인 성공 -------------------------------2로
 		      - 로그인 실패 -------------------------------종료
 		  
@@ -69,40 +78,43 @@ int onion_registerAllPubKey(){
    2. 성공적으로 로그인 하였습니다!
       2.1 자동으로 서버에 githubID, IP, port 등록하기  : dbserver_sendcommand("@adduser IP Port GithubID")
       2.2 자동으로 서버에서 유저목록 가져와서 저장하기      : dbserver_sendcommand("@userlist")  (참고. OnionUser.db.tmp 가 로컬에 저장됨)
-	  2.3 자동으로 유저목록들 키를 모두 등록하기           : [TODO] OnionUser.db.tmp 유저목록들 모두 돌려서 download_pubkey호출하고 register_pubkey를 호출해가지고 등록...
+	  2.3 자동으로 유저목록들 키를 모두 등록하기          : onion_registerAllPubKey()
    
 	
    while(1)   
 	 3. 대기중..............대기할때 주기적으로 유저목록 갱신
-        nc로 리쓰닝중........
+        nc로 리쓰닝중........쓰레드1는 백그라운드리쓰닝 / 쓰레드2는 포그라운드처리
      
 	 4. 유저 목록 보여주는 기능 (이거호출할때 목록 자동 업데이트함. 그래서 사람이 직접 업데이트할필요 없음)
         2.2 ㅇㅇ
 		2.3 ㅇㅇ
 	    4.1 [TODO] 그냥 단순히 로컬에있는 OnionUser.db.tmp 읽어서 화면에 뿌려줌
 	 5. send 기능
-	   5.0 유저 목록 갱신
+	   5.0 유저 목록 갱신하고 목록 보여줌
 	       2.2 ㅇㅇ
 		   2.3 ㅇㅇ
        5.1 전송대상 유저의 GithubID를 입력해 주세요 : eternalklaus
-	   5.2 전송대상 파일 선택
+	       5.1.1 유저가 있는 경우 : 유저선택 완료.
+		   5.1.2 유저가 없는 경우 : 다시 입력해 주세요!
+		         GOTO 5.1
+	   5.2 전송대상 파일의 이름을 입력해 주세요.
 	       5.2.1 파일이 있는 경우 : 파일선택 완료.
 		   5.2.2 파일이 없는 경우 : 다시 입력해 주세요!
 		         GOTO 5.2
 	   5.3 전송하시겠습니까? yes/no
 	       5.3.1 yes
 		         [TODO] OnionUser.db.tmp 에서 Circuit 구성 (ex. A->C->B)
-				 메시지 포장 포장 포장...
+				        메시지 포장 포장 포장...
 				 메시지 전송
 				 GOTO 3 ([TODO] 메시지가 잘 도착했는지 아닌지 receiver가 응답줘야함... 헤더가 success인 파일을 답변으로 보낼까?)
 		   5.3.2 no
 		         GOTO 3
 	 6. recv 기능
 	    6.1 nc로 데이터가 하나 배달된 경우
-		6.2 final이 아닌경우 - 다음사용자에게 relay 
-		6.3 final인    경우 - 
-	        6.3.1. text일때 : 읽어서 화면에 뿌려주고 파일은 삭제
-			6.3.2. file일때 : 읽어서 화면에 "[파일이름]이 도착하였습니다!" 를 뿌려줌.
+		6.2 final 이 아닌경우 - 다음사용자에게 relay 
+		6.3 final 인    경우 - 
+	        6.3.1. text일때 : 읽어서 화면에 뿌려주고 파일은 삭제 [TODO]
+			6.3.2. file일때 : 읽어서 화면에 "[파일이름]이 도착하였습니다!" 를 뿌려줌. [TODO]
      7. 엑스트라 기능
        1. 네트워크에서 유저 숨기기.. (유저가 네트워크 대역폭 짠돌이일경우?)
 	   2. 

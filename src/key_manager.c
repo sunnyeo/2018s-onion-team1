@@ -95,8 +95,6 @@ char *get_pubkey(char *githubID){
 // 현재 머신이 githubId의 것인지 검증한다.
 // deveopler : Dauren
 int auth_user(char *githubId){ 
-
-
     char cmd[BUFF_SIZE];
 	int i;
 	FILE *f;
@@ -124,6 +122,19 @@ int auth_user(char *githubId){
         return 1;
     }
 }
+
+
+// [TODO] Dauren
+// Check whether [PGP_passphrase] string is 
+// match with PGP private key(which is registered in the machine) or not.
+// (If you need mygithubId, you can use it.)
+int  auth_passphrase(char *PGP_passphrase, char *mygithubId){
+	// if correct, return 1;
+	// else, return 0;
+}
+
+
+
 
 /*
 int main(int argc, char *argv[]){

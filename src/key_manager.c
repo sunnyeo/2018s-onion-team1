@@ -124,14 +124,55 @@ int auth_user(char *githubId){
 }
 
 
-// [TODO] Dauren
+
+
+
+
+
+
+
+// [TODO] Dauren이 개발. 아직 체크안함. 정상동작하는지 확인하기. 
 // Check whether [PGP_passphrase] string is 
 // match with PGP private key(which is registered in the machine) or not.
 // (If you need mygithubId, you can use it.)
-int  auth_passphrase(char *PGP_passphrase, char *mygithubId){
-	// if correct, return 1;
-	// else, return 0;
+int  auth_passphrase(char *PGP_passphrase, char *mygithubId)
+{
+    char cmd[BUFF_SIZE];
+    char *pub_key = get_pubkey(mygithubId);
+    // first create some random file for encryption
+    system("gpg --help > RandFile");
+    // then encrypt this file with mygithubId's public key
+    snprintf(cmd, BUFF_SIZE, "sudo gpg -r %s --encrypt RandFile", pub_key);
+    system(cmd);
+    // then try to decrypt the encrypted file with mygithubId's private key
+    // in order to do this we must pass mygithubId's passphrase
+    // If this passphrase is correct resultant OutFile will be identical to
+    // the RandFile, otherwise OutFile will be empty
+    snprintf(cmd, BUFF_SIZE, "echo %s | sudo gpg --passphrase-fd 0 -r %s \
+              --decrypt RandFile.gpg > OutFile",PGP_passphrase, pub_key);
+    system(cmd);
+    // delete all of the created files to not the waste the memory
+    system("sudo rm RandFile.gpg");
+    system("rm RandFile");
+
+    FILE *f;
+    f = fopen("OutFile", "r");
+    if(fgetc(f) == EOF)
+        return 0;
+    else
+        return 1;
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

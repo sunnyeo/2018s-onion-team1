@@ -42,7 +42,7 @@ int msgfile_encrypt(char *file_name, char *githubId){
 
 	// create a random string (need time.h)
 	srand(time(NULL));
-
+	int i;
 	char randstr[10];
 	for(i=0; i<10;i++)
 	{

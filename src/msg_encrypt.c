@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
@@ -39,7 +40,17 @@ int msgfile_encrypt(char *file_name, char *githubId){
 
     pclose(import);
 
-    snprintf(cmd, 100, "gpg --armor --encrypt --recipient %s %s", key, file_name);
+	// create a random string (need time.h)
+	srand(time(NULL));
+
+	char randstr[10];
+	for(i=0; i<10;i++)
+	{
+		snprintf(randstr+i,2,"%c", rand()%26+65);
+	}
+
+	// message encryption
+    snprintf(cmd, 100, "gpg --armor -o %s.txt --encrypt --recipient %s %s", randstr, key, file_name);
 	printf("cmd ::::: %s\n",cmd);
     system(cmd);
 

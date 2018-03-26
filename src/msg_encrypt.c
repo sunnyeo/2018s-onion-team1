@@ -13,6 +13,7 @@
 // 해서 키 임폴트해오고 gpg --recipient bob --encrypt filename 로 할 수 있습니다. 
 // 그 상대방의 공개키를 이용해서 로컬에 있는 testfile.txt를 암호화하는 함수 
 // developer : MincheolSon
+// [TODO] 사용자 인터렉션 no/yes 선택하는거 없애기 : --trust-model always 옵션을 추가할 것!
 int msgfile_encrypt(char *file_name, char *githubId){
     
     char cmd[100];
@@ -22,17 +23,19 @@ int msgfile_encrypt(char *file_name, char *githubId){
     char *key;
     FILE *import;
  
- 
- //이거 잘 동작하나 확인하는 중......................................
     snprintf(cmd, 100, "gpg --import %s.pub 2>&1", githubId);
     import = popen(cmd, "r");
-
     if(import == NULL)
     {
         printf("There is no %s.pub file\n", githubId);
         return -1;
     }
-    fgets(cmd_result, 30, import);
+	
+    if(!fgets(cmd_result, 29, import)) { // [취약점 패치] [@eternalklaus] cmd_result가 없을시 segmentation fault가 발생하는 문제 해결
+        printf("There is no %s.pub file\n", githubId);
+        return -1;
+	}
+	printf("haha\n");
     temp = strstr(cmd_result, "key");
     key = strstr(temp," ");
     temp = strstr(key, ":");
@@ -41,7 +44,7 @@ int msgfile_encrypt(char *file_name, char *githubId){
 
     pclose(import);
 
-    snprintf(cmd, 100, "gpg --armor --encrypt --recipient %s %s", key, file_name);
+    snprintf(cmd, 100, "gpg --trust-model always --armor --encrypt --recipient %s %s", key, file_name); 
     system(cmd);
 
     return 0;
@@ -123,7 +126,9 @@ int msgfile_decrypt(char *filename, char *passphrase){
 }
 
 int main(){
-	msgfile_encrypt("jiwon.txt","eternalklaus");
+	// 다른사람의 아이디를 가져와서 
+	download_pubkey("AhnMo");
+	msgfile_encrypt("jiwon.txt","AhnMo");
 }
 
 

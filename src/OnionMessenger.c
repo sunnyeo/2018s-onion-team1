@@ -19,6 +19,52 @@
 #define  BUFF_SIZE   1024
 
 
+// 유저중 랜덤으로 생성된 Circuit을 리턴한다. (sendernum, receivernum는 제외한다)
+int *Onion_selectCircuit(int totalUserNum, int circuit_len, int sendernum, int receivernum)
+{
+    // 삽입 방식
+    int flag[totalUserNum+1];
+	int i, j, number, count;
+	int *circuit;
+
+	memset( flag, 0, (totalUserNum+1)*sizeof(int) );
+	circuit = (int*)malloc(sizeof(int)*(circuit_len-2));
+    srand((unsigned int)time(NULL));
+	
+	// 센더와리시버는제외
+	flag[sendernum]=2;
+	flag[receivernum]=2;
+	
+    count = 0;
+    do
+    {
+        number = (rand() % totalUserNum) + 1;
+        if( flag[number] == 0 )
+        {
+            flag[number] = 1;
+            count++;
+			//printf("Pick! : %d, Count : %d\n",number,count);
+        }
+    }
+    while( count < circuit_len-2 ); //circuit_len 개 만큼 뽑아온다. 
+
+	printf("hahahahahhahaha\n");
+	
+	j=0;
+	for(i=1; i < totalUserNum+1; i++ ){
+        if(flag[i]==1){
+			printf( "%d ", i );
+			circuit[j++]=i;
+		}
+	}
+    printf("\n");
+
+	return circuit;
+}
+
+
+
+
 //OnionUser.db.tmp 에 있는 유저의 public key들을 모두 등록한다
 int onion_registerAllPubKey(){
 	FILE *fp;
@@ -58,7 +104,7 @@ int onion_showUserlist(){
 }
 
 // 현재 로그인한사람들 Num을 리턴하는 함수
-int onion_getUsernum(){
+int onion_getTotalUsernum(){
 	FILE *fp;
 	fp = fopen("OnionUser.db.tmp","r");
 	int i=0;
@@ -78,20 +124,19 @@ int onion_getUsernum(){
 }
 
 
-
+/*
 // len개의 circuit을 구성한다
-char** onion_makeCircuit(int len, char *sender_githubID, char *receiver_githubID){ // 192.168.1.124 4444 eternalklaus 의 문장으로구성된 문자열리스트를 리턴한다. 
+char** onion_makeCircuit(int circuit_len, char *sender_githubID, char *receiver_githubID){ // 192.168.1.124 4444 eternalklaus 의 문장으로구성된 문자열리스트를 리턴한다. 
 	FILE *fp;
 	char **lines; // 이걸 동적으로 할당하고 싶음......
 	char *line;
 	int i=0;
 	int linenum,usernum,sendernum,receivernum;
+
 	
-	
-	
-	usernum = onion_getUsernum();
+	usernum = onion_getTotalUsernum();
 	fp = fopen("OnionUser.db.tmp", "r");
-	lines = (char**)malloc(sizeof(line) * len); // 3개짜리 스트링 리스트
+	lines = (char**)malloc(sizeof(line) * circuit_len); // 3개짜리 스트링 리스트
 	
 	
 	if (fp == NULL){
@@ -108,7 +153,7 @@ char** onion_makeCircuit(int len, char *sender_githubID, char *receiver_githubID
 				sendernum=linenum;
 			}
 			else if(strstr(line,receiver_githubID)){
-				lines[len-1]=line;
+				lines[circuit_len-1]=line;
 				receivernum=linenum;
 			}
 			else{
@@ -125,6 +170,8 @@ char** onion_makeCircuit(int len, char *sender_githubID, char *receiver_githubID
 		
 		// 1~num 중에 sendernum, receivernum 을 제외하고
 		// [num-2] 개의 랜덤넘버를 뽑는다. 
+		
+		
 		
 		randnum[num-2];
 		
@@ -150,9 +197,7 @@ char** onion_makeCircuit(int len, char *sender_githubID, char *receiver_githubID
 	return lines;
 	
 }
-
-// 스레드 2개 !! - 받는얘가 백그라운드 스레드!
-
+*/
 
 // 만약 깃허브의 IndividualKey 폴더에 해당 유저가 있다면 1 리턴, 없다면 0을 리턴합니다. 
 // developer : hansh09
@@ -211,13 +256,14 @@ char *getHostIP(char *interface){
 
 int main(int argc, char *argv[])
 {
-	char **lines;
+	
+	//void InsertNumber(int totalUserNum, int circuit_len, int sendernum, int receivernum)
+	int *rett;
 	int i;
-
-	lines = onion_makeCircuit(3, "eternalklaus", "hansh17");
-	for(i=0;i<3;i++)
-		printf("%s-->",lines[i]);
-
+	rett = Onion_selectCircuit(10, 5, 3, 4);
+	for(i=0;i<5-2;i++){
+		printf("%d-->",rett[i]);
+	}
 }
 
 /*

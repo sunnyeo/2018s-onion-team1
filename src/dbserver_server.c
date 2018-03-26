@@ -1,3 +1,8 @@
+// @userlist
+// @adduser "192.168.0.1 2222 eternalklaus"
+// @deleteuser eternlaklaus
+// 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,46 +10,97 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#define  BUFF_SIZE   102
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <time.h>
+#define  BUFF_SIZE   1024
+
 #define _CRT_SECURE_NO_WARNINGS    // strtok 보안 경고로 인한 컴파일 에러 방지
 
+// [TODO] Dauren, MincheolSon
+int isClientAlive(char *ClientIP, int ClientPort){
+	// dbserver 는 주기적으로
+	// ClientIP:ClientPort 에 ping같은걸 때려서 Client가 살았나 죽었나 확인한다. 
+	// (ping말고도 더 깔끔한 다른방법이 있을것같아요.)
+	int server_socket;
+    struct sockaddr_in client_addr;
+    char snd_buff[BUFF_SIZE];
+    char rcv_buff[BUFF_SIZE];
+    int rnum[5] = {0,};
+    int i;
 
+    server_socket = socket( PF_INET, SOCK_STREAM, 0);
+    if( -1 == server_socket)
+    {
+        printf("server_socket 생성 실패\n");
+        exit(1);
+    }
 
-char *Userlist(){
-	// !userlist <- 이걸입력하면 printUserlist호출됨
-	// 현재접속한 유저리스트정보를 리턴한다. 
-	// run_dbserver를통해 보낼수있음
+    memset( &client_addr, 0, sizeof( client_addr));
+    client_addr.sin_family      = AF_INET;
+    client_addr.sin_port        = htons(ClientPort);
+    client_addr.sin_addr.s_addr = inet_addr(ClientIP);
+
+    srand(time(NULL));
+    if( -1 == connect( server_socket, (struct sockaddr*)&client_addr, sizeof( client_addr) ) )
+    {
+        return 0;
+    }
+
+    for(i=0; i<5; i++)
+    {
+        rnum[i] = rand();
+    }
+    snprintf(snd_buff, BUFF_SIZE, "%d%d%d%d%d", rnum[0],rnum[1],rnum[2],rnum[3],rnum[4]);
+    //printf("%s\n",snd_buff);
+    //printf("%d\n",(int)strlen(snd_buff));
+
+    write( server_socket, snd_buff, BUFF_SIZE);
+    read( server_socket, rcv_buff, BUFF_SIZE);
+
+    close(server_socket);
+	if (strncmp(snd_buff, rcv_buff, strlen(snd_buff)) == 0)
+		return 1; 
+	else
+		return 0;  
 }
 
+// @userlist
+char *Userlist(){ // 이걸 호출한 유저는 OnionUser.db를 로컬에 다운로드받아햐 함. 
+	   int fd;
+	   char *buff = (char*)malloc(BUFF_SIZE); // [BUG PATCH]
+	   fd=open("OnionUser.db",O_RDONLY);
+	   read(fd,buff,BUFF_SIZE-1);
+	   close(fd);
+	   return buff;
+}
 
-//성공시 1반환, 실패시0반환
+// @adduser
 int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
-	// OnionUser.db 에 str 한줄 추가
-
+    // OnionUser.db 에 str 한줄 추가
 	// 첫줄에 라인 추가 : sed -i '1itask goes here' lll.txt
 	char command[100];
-	sprintf(command, "sed -i '1i%s' %s", IpPortGithubId ,"OnionUser.db"); 
+	sprintf(command, "sed -i '1i%s ' %s", IpPortGithubId ,"OnionUser.db");  
 	printf("addUser command : %s\n", command);
 	system(command);
+	
+	return 1; 
 }
 
-//성공시 1반환, 실패시0반환
+// @deleteuser
 int deleteUser(char *githubID){
 	char command[100];
 	
 	//sed -i '/eternalklaus/d' aaa.txt 
-	sprintf(command, "sed -i '/%s/d' %s", githubID ,"OnionUser.db"); 
+	sprintf(command, "sed -i '/ %s/d' %s", githubID ,"OnionUser.db"); //추가띄어쓰기
 	printf("deleteUser command : %s\n", command);
 	system(command);
 	
-
+	return 1;
 }
 
-
-// usage : run_dbserver(12345)
-// dbserver는 내부적으로 OnionUser.db 라는 파일을 운용한다. 
-// OnionUser.db 는 사용자들의 IP, port, GithubID엔트리들을 저장하는 데이터베이스 파일이다. 
-int run_dbserver(int dbserver_port){ // [TODO] add 
+// [TODO] : 주기적으로 OnionUser 목록에 있는 IP에다가 쿼리날려서, 유저가 살아있는지 죽어있는지 확인해야 함!
+int run_dbserver(int dbserver_port){
    int   server_socket;
    int   client_socket;
    int   client_addr_size;
@@ -93,28 +149,34 @@ int run_dbserver(int dbserver_port){ // [TODO] add
       read(client_socket, buff_rcv, BUFF_SIZE);
       printf("receive: %s\n", buff_rcv);
       
-	  
-	  if (!strncmp(buff_rcv,"@adduser",strlen("@adduser"))){ // ex) @register ip port githubID 
-         addUser(buff_rcv+strlen("@adduser")+1);// 한줄을몽땅 파일에 추가...
-		 printf("파일에 추가함\n");
+	  // 서버로의 커멘드 처리 부분
+	  if (!strncmp(buff_rcv,"@adduser",strlen("@adduser"))){       // ex) @adduser ip port githubID 
+         addUser(buff_rcv+strlen("@adduser")+1);                 
+		 printf("[DBSERVER] 환영합니다!\n[DBSERVER] %s\n",buff_rcv+strlen("@adduser")+1); // 서버 프린트
+		 sprintf(buff_snd, "[DBSERVER] 환영합니다!\n[DBSERVER] %s\n",buff_rcv+strlen("@adduser")+1); // 유저 프린트
 	  }
 	  
 	  if (!strncmp(buff_rcv,"@deleteuser",strlen("@deleteuser"))){ // ex) @deleteuser githubID 
-         if(deleteUser(buff_rcv+strlen("!deleteuser")+1))
-			 printf("%s : 성공적으로 삭제했다!\n", buff_rcv+sizeof("@deleteuser")+1);
-		 else
-			 printf("그런 이름의 유저는 존재하지 않는다...\n");
+          deleteUser(buff_rcv+strlen("@deleteuser")+1);
+		  printf("[DBSERVER] Username : %s 가 현재 접속리스트에서 제거됩니다. \n",buff_rcv+sizeof("@deleteuser"));  // 서버 프린트  (buff_rcv+sizeof("@deleteuser")+1 하면 왜 짤리지?)
+		  sprintf(buff_snd, "[DBSERVER] Username : %s 가 현재 접속리스트에서 제거됩니다. \n", buff_rcv+sizeof("@deleteuser")); // 유저 프린트
+		 
 	  }
 	  
-      sprintf(buff_snd, "%d : %s", strlen(buff_rcv), buff_rcv);
-   
-	  // 클라이언트에게 보내는 서버의 메시지...
-	  write(client_socket, buff_snd, strlen(buff_snd)+1);          // +1: NULL까지 포함해서 전송
+	  if (!strncmp(buff_rcv,"@userlist",strlen("@userlist"))){
+         sprintf(buff_snd, "%s", Userlist()); 
+		 // 유저측에서는 파일 다운로드 후 저장 - dbserver_client.c 에 구현됨
+	  }
+
+	  //클라이언트 소켓에 메시지 전송
+	  write(client_socket, buff_snd, strlen(buff_snd)+1);  
       close(client_socket);
+	  
+	  
    }
 }
 
 int main()
 {
-	run_dbserver(4000);
+	run_dbserver(4000); // 4000번포트사용
 }

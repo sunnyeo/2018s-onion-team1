@@ -12,7 +12,6 @@
 
 
 
-// deleteUser
 
 int dbserver_sendcommand(char *command){
    int   client_socket;

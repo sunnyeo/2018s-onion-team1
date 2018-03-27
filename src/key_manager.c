@@ -5,65 +5,157 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <fcntl.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #define  BUFF_SIZE   1024
 
 
-// github 서버에서 키를 다운받아 온다. 
-// [TODO] 이미 로컬에 키가 있다면 다운 안받는 루틴 추가해야 함...
-// 
+// [TODO] public key들이 저장되는 tmp폴더를 따로 만들기. 
+
+
+
+// download [githubId.pub] from github repository.
+// developer : hansh09
 int download_pubkey(char *githubId){
         char *url = "https://raw.githubusercontent.com/KAIST-IS521/2018-Spring/master/IndividualKeys/";
 		char cmd[BUFF_SIZE];
-        snprintf(cmd, BUFF_SIZE, "wget %s%s.pub", url, githubId);
-		printf("%s",cmd);
-		system(cmd);
+		char githubIdpub[100];
+		int ret;
+        snprintf(cmd, BUFF_SIZE, "wget %s%s.pub 2>/dev/null", url, githubId);
+        snprintf(githubIdpub, BUFF_SIZE,"%s.pub", githubId);
+		ret = access(githubIdpub, F_OK);
+		if(ret) // 존재하지 않는다면 다운받는다
+		{
+			system(cmd);
+		}
 	return 0;	
 }
 
-// 로컬에 현재 [githubId.pub]에 있는 상태에서, 그 키를 등록한다. 
+
+// register [githubId.pub]  
+// developer : MincheolSon
 int register_pubkey(char *githubId){
-	
     char cmd[BUFF_SIZE];
-    snprintf(cmd, BUFF_SIZE,  "gpg --import %s.pub", githubId);
+	// prerequisite : [githubId.pub] file. 
+	download_pubkey(githubId);
+    snprintf(cmd, BUFF_SIZE,  "gpg --import %s.pub 2>/dev/null", githubId);
     system(cmd);
 }
 
-// ex) 로컬에 hansh17.pub 파일이 있는 상태에서, publickey 문자열(6DBC89AE)을 리턴하는 함수
-char get_pubkey(char *githubID){
-	/*
-    첫번째시도
-    Laura$ gpg --import hansh17.pub 
-    gpg: key 6DBC89AE: public key "Seongho Han (SH) <hansh09@kaist.ac.kr>" imported
-    gpg: Total number processed: 1
+
+// register [private key]
+// developer : hansh09
+int register_private_key(char *privfile){
+	char cmd[BUFF_SIZE];
+	snprintf(cmd, BUFF_SIZE, "gpg --allow-secret-key-import --import %s 2>/dev/null", privfile);
+	system(cmd);
+}
+
+
+// get key ID of [githubId.pub] 
+// developer : Dauren
+char *get_pubkeyID(char *githubId){
+    char cmd[BUFF_SIZE];
+	int i;
+	FILE *f;
+	char c;
+	char *pubkey_id = (char*)malloc(10);
+	
+	// prerequisite : [githubId.pub] file. 
+	download_pubkey(githubId);
+    snprintf(cmd, BUFF_SIZE, "sudo gpg %s.pub > KeyId.tmp 2>/dev/null",githubId);
+    //create the file containing the KeyId of user githubId
+    system(cmd);
+    f = fopen("KeyId.tmp", "r");
     
-    두번째시도
-    Laura$ gpg --import hansh17.pub 
-    gpg: key 6DBC89AE: "Seongho Han (SH) <hansh09@kaist.ac.kr>" not changed
-    
-    "gpg: key" 문자열 다음으로 파싱해오면될것같은데...
-    */
-	char *publickey;
-	// [TODO] 
-	return publickey;
+
+    if(fgetc(f) == EOF) //if file is empty it means that user is not registered
+    {
+        printf("User %s is not registered yet\n", githubId);
+        return 0;
+    }
+    // get the user's KeyId from KeyId.tmp file
+    // file format is as following
+    // pub  <size of key>/<key id> <creation date> <user name> <email>
+	//      ex) pub  2048R/EDE8D438 2018-03-22 jiwon choi (Second gpg key....) <jiwon.choi@kaist.ac.kr>
+    // we only need <key id> part
+    for(i=0;;c = fgetc(f))
+    {
+        if(c == '/')
+        {
+            while((c=fgetc(f)) != ' ')
+                pubkey_id[i++] = c;
+            pubkey_id[i] = '\0';
+            break;
+        }
+    }
+	snprintf(cmd,BUFF_SIZE,"rm KeyId.tmp");
+	system(cmd);
+	return pubkey_id;
 }
 
-// 그리고 메신저에서 eternalklaus 본인인지 아닌지 확인하는 부분도 넣기
-int auth_user(char *githubId){
-	// ex) hansh17 을 입력했을 때, 
-	//     현재 머신에 hansh17의 private key가 등록된 상태라면? ---> 본인인증 성공(1리턴)
-	//     현재 머신에 다른사람의  private key가 등록된 상태라면? ---> 본인인증 실패(0리턴)
+
+// verify local machine is githubId's or not.
+// deveopler : Dauren
+int auth_user(char *githubId){ 
+    char cmd[BUFF_SIZE];
+	int i;
+	FILE *f;
+	char a[9],c;
+
+	// prerequisite : [githubId.pub] file. 
+	download_pubkey(githubId);
+	
+    // now key id of user is stored in *a
+    snprintf(cmd, BUFF_SIZE, "sudo gpg --export-secret-keys -a %s > privateKey.tmp",get_pubkeyID(githubId));
+
+    // check if the private key of user is stored on this machine
+    // If it is, then it will be saved in the privateKey.tmp. Otherwise,
+    // this command will give warning and privateKey.tmp will be empty
+    system(cmd);
+    f = fopen("privateKey.tmp","r");
+    if(getc(f) == EOF)
+        return 0;
+    else
+    {
+        snprintf(cmd,BUFF_SIZE,"sudo rm privateKey.tmp"); //delete the privateKey file
+                                                          //before exiting this function
+        system(cmd);
+        return 1;
+    }
 }
 
 
+// [TODO] 잘됨. 하지만 쉘에 메시지가 뜸. 어차피 백그라운드로 돌아갈거라 상관없나...
+// Check whether [PGP_passphrase] string is 
+// match with PGP private key(which is registered in the machine) or not.
+// (If you need mygithubId, you can use it.)
+int  auth_passphrase(char *PGP_passphrase, char *mygithubId)
+{
+    char cmd[BUFF_SIZE];
+    char *pub_key = get_pubkeyID(mygithubId);
+    // first create some random file for encryption
+    system("gpg --help > dummyfile.tmp");
+    // then encrypt this file with mygithubId's public key
+    snprintf(cmd, BUFF_SIZE, "sudo gpg -r %s --encrypt dummyfile.tmp 2>/dev/null", pub_key);
+    system(cmd);
+    // then try to decrypt the encrypted file with mygithubId's private key
+    // in order to do this we must pass mygithubId's passphrase
+    // If this passphrase is correct resultant authresult.tmp will be identical to
+    // the dummyfile.tmp, otherwise authresult.tmp will be empty
+    snprintf(cmd, BUFF_SIZE, "echo %s | sudo gpg --passphrase-fd 0 -r %s --decrypt dummyfile.tmp.gpg > authresult.tmp 2>/dev/null",PGP_passphrase, pub_key);
+    system(cmd);
+    // delete all of the created files to not the waste the memory
+    system("sudo rm dummyfile.tmp.gpg");
+    system("rm dummyfile.tmp");
 
-int main(int argc, char *argv[]){
-		
-	//addUser("127.0.0.1", 12345, "eternalklaus");
-	//addUser("127.0.0.1", 12345, "hansh");
-	download_pubkey("eternalklaus");
-	register_pubkey("eternalklaus");
-	//dbserver_sendcommand(argv[1]);
+    FILE *f;
+    f = fopen("authresult.tmp", "r");
+    if(fgetc(f) == EOF)
+        return 0;
+    else
+        return 1;
 }
+
+

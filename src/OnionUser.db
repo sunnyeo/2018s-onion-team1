@@ -1,5 +1,7 @@
-192.168.1.123 4444 0----00
-192.168.1.123 4444 mine
-192.168.1.123 4444 daehee
-192.168.1.123 4444 bla
-There should be at least 1 line on OnionUser.db
+127.0.0.1 48349 kakaka 
+jiwon
+daehee 
+192.168.1.121 4441 hansh17
+192.168.1.123 4443 MincheolSon
+192.168.1.124 4444 invalidname
+---------END of OnionUser----------

@@ -1,3 +1,8 @@
+// @userlist
+// @adduser "192.168.0.1 2222 eternalklaus"
+// @deleteuser eternlaklaus
+// 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,50 +16,53 @@
 
 #define _CRT_SECURE_NO_WARNINGS    // strtok 보안 경고로 인한 컴파일 에러 방지
 
-
-// @usetlist
-char *Userlist(){ // @userlist <- 이걸입력하면 Userlist가 호출됨. OnionUser.db를 로컬에 다운로드받음. 
-	   // 우선 데이터를 읽어서 전송만 해준다. 
-	   // 그러고나서 클라이언트측에서는 전송된데이터를바탕으로 파일을생성한다. 그건클라이언트에구현함
+// [TODO] Dauren, MincheolSon
+int isClientAlive(ClientIP, ClientPort){
+	// dbserver 는 주기적으로
+	// ClientIP:ClientPort 에 ping같은걸 때려서 Client가 살았나 죽었나 확인한다. 
+	// (ping말고도 더 깔끔한 다른방법이 있을것같아요.)
 	
-	   // OnionUser.db file open and read
-	   char *buff[BUFF_SIZE];
+	if (ClientIP:ClientIP is alive)
+		return 1; 
+	else
+		return 0;  
+}
+
+// @userlist
+char *Userlist(){ // 이걸 호출한 유저는 OnionUser.db를 로컬에 다운로드받아햐 함. 
 	   int fd;
-	   fd=open("OnionUser.db",O_RDONLY);// 읽어온 buff를 파일에 저장
-	   read(fd,buff,BUFF_SIZE);
+	   char *buff = (char*)malloc(BUFF_SIZE); // [BUG PATCH]
+	   fd=open("OnionUser.db",O_RDONLY);
+	   read(fd,buff,BUFF_SIZE-1);
 	   close(fd);
 	   return buff;
 }
 
-
+// @adduser
 int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
     // OnionUser.db 에 str 한줄 추가
 	// 첫줄에 라인 추가 : sed -i '1itask goes here' lll.txt
 	char command[100];
-	sprintf(command, "sed -i '1i%s ' %s", IpPortGithubId ,"OnionUser.db");  //띄어쓰기추가?
+	sprintf(command, "sed -i '1i%s ' %s", IpPortGithubId ,"OnionUser.db");  
 	printf("addUser command : %s\n", command);
 	system(command);
 	
 	return 1; 
 }
 
-
+// @deleteuser
 int deleteUser(char *githubID){
 	char command[100];
 	
 	//sed -i '/eternalklaus/d' aaa.txt 
-	sprintf(command, "sed -i '/ %s /d' %s", githubID ,"OnionUser.db"); //추가띄어쓰기
+	sprintf(command, "sed -i '/ %s/d' %s", githubID ,"OnionUser.db"); //추가띄어쓰기
 	printf("deleteUser command : %s\n", command);
 	system(command);
 	
 	return 1;
 }
 
-
-// usage : run_dbserver(12345)
-// dbserver는 내부적으로 OnionUser.db 라는 파일을 운용한다. 
-//                    OnionUser.db 는 사용자들의 IP, port, GithubID엔트리들을 저장하는 데이터베이스 파일이다. 
-int run_dbserver(int dbserver_port){ // [TODO] add 
+int run_dbserver(int dbserver_port){
    int   server_socket;
    int   client_socket;
    int   client_addr_size;
@@ -103,8 +111,6 @@ int run_dbserver(int dbserver_port){ // [TODO] add
       read(client_socket, buff_rcv, BUFF_SIZE);
       printf("receive: %s\n", buff_rcv);
       
-	  
-	  // [TODO] 명령어 전송할 때 ""으로 감싸서 보내기
 	  // 서버로의 커멘드 처리 부분
 	  if (!strncmp(buff_rcv,"@adduser",strlen("@adduser"))){       // ex) @adduser ip port githubID 
          addUser(buff_rcv+strlen("@adduser")+1);                 
@@ -124,15 +130,14 @@ int run_dbserver(int dbserver_port){ // [TODO] add
 		 // 유저측에서는 파일 다운로드 후 저장 - dbserver_client.c 에 구현됨
 	  }
 
-   
-	  //클라이언트 소켓에 메시지 전송
 	  write(client_socket, buff_snd, strlen(buff_snd)+1);  
-	  
       close(client_socket);
+	  
+	  
    }
 }
 
 int main()
 {
-	run_dbserver(4000);
+	run_dbserver(4000); // 4000번포트사용
 }

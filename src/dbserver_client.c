@@ -21,8 +21,7 @@ int dbserver_sendcommand(char *command){
    int    fd;
 
    client_socket  = socket( PF_INET, SOCK_STREAM, 0);
-   if( -1 == client_socket)
-   {
+   if( -1 == client_socket)   {
       printf( "[DBSERVER] socket 생성 실패\n");
       exit( 1);
    }

@@ -62,7 +62,10 @@ int deleteUser(char *githubID){
 	return 1;
 }
 
+<<<<<<< HEAD
 // [TODO] : 주기적으로 OnionUser 목록에 있는 IP에다가 쿼리날려서, 유저가 살아있는지 죽어있는지 확인해야 함!
+=======
+>>>>>>> master
 int run_dbserver(int dbserver_port){
    int   server_socket;
    int   client_socket;
@@ -131,7 +134,10 @@ int run_dbserver(int dbserver_port){
 		 // 유저측에서는 파일 다운로드 후 저장 - dbserver_client.c 에 구현됨
 	  }
 
+<<<<<<< HEAD
 	  //클라이언트 소켓에 메시지 전송
+=======
+>>>>>>> master
 	  write(client_socket, buff_snd, strlen(buff_snd)+1);  
       close(client_socket);
 	  

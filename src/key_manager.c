@@ -5,65 +5,161 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <fcntl.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #define  BUFF_SIZE   1024
 
+int is_valid_githubid(char *githubId);
+int auth_passphrase(char *PGP_passphrase, char *mygithubId);
+int to_exist_publickey(char *githubId);
+int register_pubkey(char *githubId);
+int register_private_key(char *privfile);
+char *get_pubkeyID(char *githubId);
+int auth_user(char *githubId);
+int onion_register_all_pubkey();
 
-// github 서버에서 키를 다운받아 온다. 
-// [TODO] 이미 로컬에 키가 있다면 다운 안받는 루틴 추가해야 함...
-// 
-int download_pubkey(char *githubId){
-        char *url = "https://raw.githubusercontent.com/KAIST-IS521/2018-Spring/master/IndividualKeys/";
-		char cmd[BUFF_SIZE];
-        snprintf(cmd, BUFF_SIZE, "wget %s%s.pub", url, githubId);
-		printf("%s",cmd);
-		system(cmd);
-	return 0;	
+int is_valid_githubid(char *githubId){
+	char *url = "https://github.com/KAIST-IS521/2018-Spring/blob/master/IndividualKeys/";
+	char cmd[BUFF_SIZE];
+	snprintf(cmd, BUFF_SIZE, "wget --spider --timeout=1 %s%s.pub 2>/dev/null", url, githubId);
+	if(!system(cmd)) return 1; //valid
+	return 0;
 }
 
-// 로컬에 현재 [githubId.pub]에 있는 상태에서, 그 키를 등록한다. 
-int register_pubkey(char *githubId){
-	
+// Check whether [PGP_passphrase] string is  match with PGP private key(which is registered in the machine) or not.
+int  auth_passphrase(char *PGP_passphrase, char *mygithubId){
     char cmd[BUFF_SIZE];
-    snprintf(cmd, BUFF_SIZE,  "gpg --import %s.pub", githubId);
+    char *pub_key ;
+	int auth;
+	
+	if(!to_exist_publickey(mygithubId)) {
+		printf("error! cannot get %s.pub...\n",mygithubId); 
+	}
+	register_pubkey(mygithubId);
+	pub_key =(char*)get_pubkeyID(mygithubId); 
+	if(!pub_key) return 0;
+	
+	system("gpg --help > dummyfile.tmp");
+    snprintf(cmd, BUFF_SIZE, "sudo gpg -r %s --encrypt dummyfile.tmp", pub_key);
+    system(cmd);
+    snprintf(cmd, BUFF_SIZE, "echo %s | sudo gpg --passphrase-fd 0 -r %s --decrypt dummyfile.tmp.gpg > authresult.tmp",PGP_passphrase, pub_key);
+    system(cmd);
+    system("sudo rm dummyfile.tmp.gpg");
+    system("rm dummyfile.tmp");
+
+    FILE *f;
+    f = fopen("authresult.tmp", "r");
+    if(fgetc(f) == EOF) auth=0;
+    else auth=1; //valid
+	
+	system("rm authresult.tmp");
+	return auth;
+}
+
+int to_exist_publickey(char *githubId){
+    char *url = "https://raw.githubusercontent.com/KAIST-IS521/2018-Spring/master/IndividualKeys/";
+	char cmd[BUFF_SIZE];
+	char githubIdpub[100];
+	int ret;
+    
+    snprintf(githubIdpub, BUFF_SIZE,"%s.pub", githubId);
+	ret = access(githubIdpub, F_OK);
+	if(ret==0) return 1;
+	else{ // no exist
+		if(is_valid_githubid(githubId)){
+			snprintf(cmd, BUFF_SIZE, "wget %s%s.pub 2>/dev/null", url, githubId);
+			system(cmd);
+			return 1;
+		}
+	}
+	return 0; // no exist both local and server. 
+}
+
+int register_pubkey(char *githubId){
+    char cmd[BUFF_SIZE];
+	to_exist_publickey(githubId); // prerequisite : [githubId.pub] file. 
+    snprintf(cmd, BUFF_SIZE,  "gpg --import %s.pub 2>/dev/null", githubId);
     system(cmd);
 }
 
-// ex) 로컬에 hansh17.pub 파일이 있는 상태에서, publickey 문자열(6DBC89AE)을 리턴하는 함수
-char get_pubkey(char *githubID){
-	/*
-    첫번째시도
-    Laura$ gpg --import hansh17.pub 
-    gpg: key 6DBC89AE: public key "Seongho Han (SH) <hansh09@kaist.ac.kr>" imported
-    gpg: Total number processed: 1
-    
-    두번째시도
-    Laura$ gpg --import hansh17.pub 
-    gpg: key 6DBC89AE: "Seongho Han (SH) <hansh09@kaist.ac.kr>" not changed
-    
-    "gpg: key" 문자열 다음으로 파싱해오면될것같은데...
-    */
-	char *publickey;
-	// [TODO] 
-	return publickey;
+int register_private_key(char *privfile){
+	char cmd[BUFF_SIZE];
+	snprintf(cmd, BUFF_SIZE, "gpg --allow-secret-key-import --import %s 2>/dev/null", privfile);
+	system(cmd);
 }
 
-// 그리고 메신저에서 eternalklaus 본인인지 아닌지 확인하는 부분도 넣기
-int auth_user(char *githubId){
-	// ex) hansh17 을 입력했을 때, 
-	//     현재 머신에 hansh17의 private key가 등록된 상태라면? ---> 본인인증 성공(1리턴)
-	//     현재 머신에 다른사람의  private key가 등록된 상태라면? ---> 본인인증 실패(0리턴)
+char *get_pubkeyID(char *githubId){
+    char cmd[BUFF_SIZE];
+	int i;
+	FILE *f;
+	char c;
+	char *pubkeyID = (char*)malloc(16);
+	if (!to_exist_publickey(githubId)) return NULL; // prerequisite : [githubId.pub] file. 
+    snprintf(cmd, BUFF_SIZE, "sudo gpg %s.pub > KeyId.tmp 2>/dev/null",githubId);
+    system(cmd);
+    f = fopen("KeyId.tmp", "r");
+    if(fgetc(f) == EOF) return NULL;
+    for(i=0;;c = fgetc(f))
+    {
+        if(c == '/')
+        {
+            while((c=fgetc(f)) != ' ')
+                pubkeyID[i++] = c;
+            pubkeyID[i] = '\0';
+            break;
+        }
+    }
+	snprintf(cmd,BUFF_SIZE,"rm KeyId.tmp");
+	system(cmd);
+	return pubkeyID;
+}
+
+int auth_user(char *githubId){ 
+    char cmd[BUFF_SIZE];
+	int i;
+	FILE *f;
+	char a[9],c;
+	char *pubkeyID;
+	to_exist_publickey(githubId);// prerequisite : [githubId.pub] file. 
+	pubkeyID=get_pubkeyID(githubId);
+	if(!pubkeyID) return 0;
+    snprintf(cmd, BUFF_SIZE, "sudo gpg --export-secret-keys -a %s > privateKey.tmp", pubkeyID);
+    system(cmd);
+    f = fopen("privateKey.tmp","r");
+    if(getc(f) == EOF) return 0;
+    else{
+        snprintf(cmd,BUFF_SIZE,"sudo rm privateKey.tmp"); 
+        system(cmd);
+        return 1;
+    }
+}
+
+int onion_register_all_pubkey(){
+	FILE *fp;
+	char line[100];
+	char *githubID;
+	fp = fopen("OnionUser.db.tmp", "r"); 
+	int i=0;
+	
+	if (fp == NULL) {
+		exit(101);
+	}
+	else{
+		while(!feof(fp)){
+			fgets(line, 100, fp);
+			if(line[0]=='-') break; // [TODO] trim
+			githubID = strchr(line, ' ')+1;
+			githubID = strchr(githubID, ' ')+1;
+			githubID[strlen(githubID)-1] = '\0';
+			printf("%s\n",githubID);
+			
+			to_exist_publickey(githubID);
+			register_pubkey(githubID);
+		}
+		printf("key registered\n");
+	}
+	return 0;
 }
 
 
-
-int main(int argc, char *argv[]){
-		
-	//addUser("127.0.0.1", 12345, "eternalklaus");
-	//addUser("127.0.0.1", 12345, "hansh");
-	download_pubkey("eternalklaus");
-	register_pubkey("eternalklaus");
-	//dbserver_sendcommand(argv[1]);
-}

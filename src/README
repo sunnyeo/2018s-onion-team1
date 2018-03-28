@@ -1,0 +1,26 @@
+# how to test this program?
+
+1. install NCURSES library (apt-get install libncurses-dev)
+2. add three users (adduser user1; adduser user2; adduser user3)
+3. Make this! (make)
+4. start dbserver from some other terminal (./dbserver)
+5. start three instances of dvonion (from user1, user2, user3's terminal)
+6. send/recv message (e.g., /sendmsg user3 hello!)
+
+
+
+# before step 4...
+
+users should be sudo user to run gpg. add below 3 line.
+
+$ sudo vi /etc/sudoers 
+user1 ALL=(ALL) ALL   # Change the user name before you issue the commands
+user2 ALL=(ALL) ALL   # Change the user name before you issue the commands
+user3 ALL=(ALL) ALL   # Change the user name before you issue the commands
+
+
+
+
+
+
+

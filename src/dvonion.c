@@ -70,7 +70,8 @@ PMSGQ g_head;
 char g_id[32];
 char g_passphrase[256];
 int lock=0;
-
+char* get_time();
+	
 void queue_msg(char* msg){
     PMSGQ tmp = (PMSGQ)malloc(sizeof(MSGQ));
     memset(tmp, 0, sizeof(MSGQ));
@@ -119,9 +120,7 @@ void draw_list_window(){
         sleep(1);
     }
 }
-void debug(){
-	printf("debug");
-}
+
 void draw_server_window(){
     int i=0;
     PMSGQ tmp=0;
@@ -155,20 +154,17 @@ void trim(char* s){
     }
 }
 
-int get_total_usernum(){
-	FILE *fp;
-	fp = fopen("OnionUser.db.tmp","r+");
-	int i=0;
-	char line[100];
-	if (fp == NULL) return 0;
-	else{
-		while(!feof(fp)){ 
-			fgets(line, 100, fp);
-			if(line[0]=='-') break; 
-			i++;
-		}
-	}
-	return i;
+char* get_time(){
+    struct tm *t;
+    time_t timer;
+	char *ret = malloc(32);
+
+    time(&timer);
+    t = localtime(&timer);
+
+    snprintf(ret, 32, "%02d-%02d %02d:%02d",
+            t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min);
+    return ret;
 }
 
 #define TMPFILE "onion_receive"
@@ -237,7 +233,7 @@ void* server_thread(void* param){
 				...
 				*/
 				// [END] g_id
-                snprintf(tmpmsg, 512, "%s -> %s : %s", gitid, g_id, buf);
+                snprintf(tmpmsg, 512, "[%s]%s->%s : %s", get_time(), gitid, g_id, buf);
 				
 				
             }
@@ -426,8 +422,7 @@ int dv_send(char* str, int isfile){
 	system("sed -i '1d' onion"); // remove next node port
 	
     snprintf(cmd, 256, "cat onion | nc %s %s", t->ip, t->port); system(cmd); //relay to end node
-    snprintf(cmd, 256, "%s -> %s: %s", g_id, to, msg); queue_msg(cmd);
-    
+    snprintf(cmd, 256, "[%s]%s->%s : %s", get_time(), g_id, to, msg); queue_msg(cmd);
 }
 
 void main(){

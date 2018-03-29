@@ -71,7 +71,24 @@ char g_id[32];
 char g_passphrase[256];
 int lock=0;
 char* get_time();
-	
+
+void system_s(char *cmd){ // [TODO] command injection attack filter...
+	/*
+	string illegal = "\"M\"\\a/ry/ h**ad:>> a\\/:*?\"| li*tt|le|| la\"mb.?";
+	int filter(char* cmd){
+        int r=0;
+        r += strstr(cmd, "=")!=0;
+        r += strstr(cmd, "PATH")!=0;
+        r += strstr(cmd, "export")!=0;
+        r += strstr(cmd, "/")!=0;
+        r += strstr(cmd, "`")!=0;
+        r += strstr(cmd, "flag")!=0;
+        return r;
+	}
+	*/
+	system(cmd);
+}
+
 void queue_msg(char* msg){
     PMSGQ tmp = (PMSGQ)malloc(sizeof(MSGQ));
     memset(tmp, 0, sizeof(MSGQ));
@@ -252,7 +269,7 @@ void* server_thread(void* param){
                 snprintf(cmd, 256, "mv " TMPFILE " %s", fname);
 				system(cmd);
 				
-                snprintf(tmpmsg, 512, "%s sent you %s file", gitid, fname);
+                snprintf(tmpmsg, 512, "[%s]%s sent you %s file", get_time(), gitid, fname);
             }
             else{
                 snprintf(tmpmsg, 512, "corrupted format");
@@ -403,26 +420,34 @@ int dbserver_interact(char *command){
    return 0;
 }
 
-// [ID] [MSG]
-int dv_send(char* str, int isfile){
-    char* msg = strchr(str, ' ')+1;
+// [ID] [MSG] or [ID] [FILE]
+int dv_send(char* str, int isfile){ 
+    char* cmd = malloc(256);
+	char* msg = strchr(str, ' ')+1;
     char* to = str;
     char* from = g_id;
     char* p = strchr(to, ' ');
+	precord t;
     p[0] = 0;
 	//if(msg==1) msg="";
 	
     parse_db("OnionUser.db.tmp");
-    precord t = onion_route_msg(from, to, msg);  // [ENC] fileoutput: onion. / t = right next node..
-    printf("ip:%s, port%s\n", t->ip, t->port);
-
-    char* cmd = malloc(256);
+	if(!isfile) t = onion_route_msg(from, to, msg);  // [ENC] fileoutput: onion. / t = right next node..
+	else t = onion_route_file(from, to, msg);  // [ENC] fileoutput: onion. / t = right next node..
 	
+	printf("ip:%s, port%s\n", t->ip, t->port);
+
 	system("sed -i '1d' onion"); // remove next node ip
 	system("sed -i '1d' onion"); // remove next node port
 	
-    snprintf(cmd, 256, "cat onion | nc %s %s", t->ip, t->port); system(cmd); //relay to end node
-    snprintf(cmd, 256, "[%s]%s->%s : %s", get_time(), g_id, to, msg); queue_msg(cmd);
+	if(!isfile){
+		snprintf(cmd, 256, "cat onion | nc %s %s", t->ip, t->port); system(cmd); //relay to end node
+		snprintf(cmd, 256, "[%s]%s->%s : %s", get_time(), g_id, to, msg); queue_msg(cmd);
+	}
+	else{ //file
+		snprintf(cmd, 256, "cat onion | nc %s %s", t->ip, t->port); system(cmd); //relay to end node
+		snprintf(cmd, 256, "[%s]%s->%s sendfile : %s", get_time(), g_id, to, msg); queue_msg(cmd);
+	}
 }
 
 void main(){

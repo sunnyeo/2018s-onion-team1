@@ -40,13 +40,13 @@ int  auth_passphrase(char *PGP_passphrase, char *mygithubId){
 	pub_key =(char*)get_pubkeyID(mygithubId); 
 	if(!pub_key) return 0;
 	
-	system("gpg --help > dummyfile.tmp");
-    snprintf(cmd, BUFF_SIZE, "sudo gpg -r %s --encrypt dummyfile.tmp", pub_key);
+	system("gpg --help > auth_passphrase.tmp");
+    snprintf(cmd, BUFF_SIZE, "sudo gpg -r %s --encrypt auth_passphrase.tmp", pub_key);
     system(cmd);
-    snprintf(cmd, BUFF_SIZE, "echo %s | sudo gpg --passphrase-fd 0 -r %s --decrypt dummyfile.tmp.gpg > authresult.tmp",PGP_passphrase, pub_key);
+    snprintf(cmd, BUFF_SIZE, "echo %s | sudo gpg --passphrase-fd 0 -r %s --decrypt auth_passphrase.tmp.gpg > authresult.tmp",PGP_passphrase, pub_key);
     system(cmd);
-    system("sudo rm dummyfile.tmp.gpg");
-    system("rm dummyfile.tmp");
+    system("sudo rm auth_passphrase.tmp.gpg");
+    system("rm auth_passphrase.tmp");
 
     FILE *f;
     f = fopen("authresult.tmp", "r");
@@ -126,7 +126,7 @@ int auth_user(char *githubId){
 	if(!pubkeyID) return 0;
     snprintf(cmd, BUFF_SIZE, "sudo gpg --export-secret-keys -a %s > privateKey.tmp", pubkeyID);
     system(cmd);
-    f = fopen("privateKey.tmp","r");
+    f = fopen("privateKey.tmp","r+");
     if(getc(f) == EOF) return 0;
     else{
         snprintf(cmd,BUFF_SIZE,"sudo rm privateKey.tmp"); 

@@ -117,7 +117,7 @@ unsigned int idx_by_id(precord p, const char* id){
 }
 
 void parse_db(const char* fname){
-    FILE* fp = fopen(fname, "r");
+    FILE* fp = fopen(fname, "r+");
     unsigned int len = fsize(fname);
     char* buf = malloc(len);
     fread(buf, len, 1, fp);
@@ -180,24 +180,28 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
     fprintf(fp, "%s\n", msg);
     fclose(fp);
     // encrypt this with e's pubkey.
-	// [TODO][암호화] msgfile_sign("onion", g_passphrase);
+	// [ENC] msgfile_sign("onion", g_passphrase);
+	
 	
     // start onioning... we use maximum MAXCIRCUIT circuits
     unsigned int i = 0;
     unsigned int r;
     for(i=0; i<itercount; i++){
+		// encrypt this onion with r's pubkey. 
+		// [ENC]
+        msgfile_encrypt("onion", init->id);       // Segfault? why?
+		// [END]
+		
         // pick a random node..
         r = randpick(arr, start, end, len);
-
         // add target IP/PORT
-        snprintf(cmd, 4096, "echo '%s' > tmpfile", init->ip);
+        snprintf(cmd, 4096, "echo '%s' > onion_enc", init->ip);
         system(cmd);
-        snprintf(cmd, 4096, "echo '%s' >> tmpfile", init->port);
+        snprintf(cmd, 4096, "echo '%s' >> onion_enc", init->port);
         system(cmd);
-        system("cat onion >> tmpfile; mv tmpfile onion");
-
-        // encrypt this onion with r's pubkey. 
-        // [TODO][암호화] msgfile_encrypt("onion", init->id);
+        // HERE
+		//system("cat onion >> onion_enc; mv onion_enc onion");
+        system("cat onion >> onion_enc; cp onion_enc onion");
 		
         init = arr[r];  // update the initial reciever.
         arr[r] = 0;     // now, this node is no more candidate.

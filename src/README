@@ -19,8 +19,8 @@ user2 ALL=(ALL) ALL   # Change the user name before you issue the commands
 user3 ALL=(ALL) ALL   # Change the user name before you issue the commands
 
 
-
-
+#instead... it is better..
+chmod -R 777 .gnugpg
 
 
 

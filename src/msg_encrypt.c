@@ -27,31 +27,30 @@ int msgfile_encrypt(char *file_name, char *githubId){
 }
 
 int msgfile_decrypt(char *filename, char *passphrase){
-	char cmd[BUFF_SIZE];
+	char cmd[256];
 	// gpg --batch --output dec --passphrase user1 --decrypt enc 2> /dev/null
-	snprintf(cmd, BUFF_SIZE, "gpg --batch --output %s.tmp --passphrase %s --decrypt %s 2>/dev/null", filename, passphrase, filename); //output : filename.tmp
+	snprintf(cmd, 256, "gpg --batch --output %s.tmp --passphrase %s --decrypt %s 2>/dev/null", filename, passphrase, filename); //output : filename.tmp
 	system(cmd);
-	snprintf(cmd, BUFF_SIZE, "mv %s.tmp %s", filename, filename);
+	snprintf(cmd, 256, "mv %s.tmp %s", filename, filename);
 	system(cmd);
 	return 0;
 
 }
 
 int msgfile_sign(char *filename, char *passphrase){ 
-	char cmd[BUFF_SIZE];
-	snprintf(cmd, BUFF_SIZE, "gpg --passphrase %s --sign %s 2>/dev/null", passphrase, filename);
+	char cmd[256];
+	snprintf(cmd, 256, "gpg --passphrase %s --sign %s 2>/dev/null", passphrase, filename);
 	system(cmd);
-	snprintf(cmd, BUFF_SIZE, "mv %s.gpg %s", filename, filename);
+	snprintf(cmd, 256, "mv %s.gpg %s", filename, filename);
 	system(cmd);
 // encryption과 함께 사용하고 싶으면 gpg --armor -o [output.txt] --passphrase [passphrase] --sign --encrypt -r [recipient's ID] [input.txt] 를 사용한다. 
 } 
 
 // decrypt and verify
 int msgfile_sign_verify(char *filename, char *githubId, char *passphrase){
-	char cmd[BUFF_SIZE];
-	char buffer[BUFF_SIZE];
-	char cmd_temp[100];
-	char cmd_result[30];
+	char cmd[256];
+	char cmd_temp[256];
+	char cmd_result[256];
 	char key_temp[30];
 	char *temp;
 	char *key;

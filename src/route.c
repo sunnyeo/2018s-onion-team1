@@ -206,6 +206,52 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
     return init; // right next node
 }
 
+// output : onion
+precord onion_route_file(const char* from, const char* to, const char* filename){
+    char* cmd = malloc(4096);
+    precord* arr = arrayfy(g_records);
+    unsigned int len = record_count(g_records);
+    unsigned int itercount = (MAXCIRCUIT < len-1) ? MAXCIRCUIT : len-1;
+    unsigned int start = idx_by_id(g_records, from);
+    unsigned int end = idx_by_id(g_records, to);
+    precord init = arr[end];        // initial reciever of the onion
+	precord initminus1 = arr[end];
+	
+    FILE* fp = fopen("onion_header", "w");
+    fprintf(fp, "final\n");
+    fprintf(fp, "file\n"); //file
+    fprintf(fp, "%s\n", from);
+    fprintf(fp, "%s\n", filename);
+    fclose(fp);
+	snprintf(cmd, 256, "cat %s >> onion_header; mv onion_header onion", filename); system(cmd);
+	
+	// msgfile_sign("onion", g_passphrase); // [ENC] sign
+	
+    unsigned int i = 0;
+    unsigned int r;
+	
+    for(i=0; i<itercount; i++){
+		init = initminus1;   // update the initial reciever.
+		msgfile_encrypt("onion", init->id); // [ENC]
+		
+		snprintf(cmd, 4096, "echo '%s' > onion.tmp", init->ip);
+        system(cmd);
+        snprintf(cmd, 4096, "echo '%s' >> onion.tmp", init->port);
+        system(cmd);
+		system("cat onion >> onion.tmp; mv onion.tmp onion");
+		
+		if(i == itercount-1) continue;
+		r = randpick(arr, start, end, len);
+		initminus1 = arr[r]; // set initminus1 node
+		arr[r] = 0;          // now, this node is no more candidate.
+    }
+    return init; // right next node
+}
+
+
+
+
+
 /*
 void trim(char* s){
     while(s[strlen(s)-1]=='\n' || s[strlen(s)-1]==' '){

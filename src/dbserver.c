@@ -56,17 +56,17 @@ char *Userlist(){ // User should download result as OnionUser.db.tmp
 
 // @adduser
 int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
-	char command[100];
-	sprintf(command, "sed -i '1i%s ' %s", IpPortGithubId ,"OnionUser.db");  
-	system(command);
+	char cmd[256];
+	snprintf(cmd, 256, "sed -i '1i%s ' %s", IpPortGithubId ,"OnionUser.db");  
+	system(cmd);
 	return 1; 
 }
 
 // @deleteuser
 int deleteUser(char *githubID){
-	char command[100];
-	sprintf(command, "sed -i '/ %s/d' %s", githubID ,"OnionUser.db");
-	system(command);
+	char cmd[256];
+	snprintf(cmd, 256, "sed -i '/ %s/d' %s", githubID ,"OnionUser.db");
+	system(cmd);
 	
 	return 1;
 }
@@ -131,7 +131,7 @@ int run_dbserver(int dbserver_port){
 	  }
 	  
 	  if (!strncmp(buff_rcv,"@userlist",strlen("@userlist"))){
-         sprintf(buff_snd, "%s", Userlist());  // user can download [buff_snd] buffer as a file. 
+         snprintf(buff_snd, BUFF_SIZE, "%s", Userlist());  // user can download [buff_snd] buffer as a file. 
 	  }
 	  write(client_socket, buff_snd, strlen(buff_snd)+1);  
       close(client_socket);

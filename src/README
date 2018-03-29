@@ -5,7 +5,7 @@
 3. Make this! (sudo make) 
 4. start dbserver from some other terminal (./dbserver)
 5. start three instances of dvonion (from user1, user2, user3's terminal)
-6. initializeeach user's environment.
+6. initialize each user's environment.
    see below appendix I
 7. send/recv message (e.g., /sendmsg user3 hello!)
 8. stop program (/quit)

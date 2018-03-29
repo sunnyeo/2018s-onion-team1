@@ -169,6 +169,10 @@ int get_total_usernum(){
 	return i;
 }
 
+void* alive_thread_c(void* param){
+    
+}
+
 #define TMPFILE "tmptmp"
 void* server_thread(void* param){
 
@@ -182,6 +186,7 @@ void* server_thread(void* param){
     char fname[128];
     char buf[256];
     char* tmpmsg = malloc(512);
+    char server_port[16];
     while(1){
 
         snprintf(buf, 256, "nc -l -p %d > %s 2>/dev/null", g_port, TMPFILE);
@@ -219,7 +224,7 @@ void* server_thread(void* param){
             else if(!strcmp(buf, "file")){
                 fgets(gitid, 64, fp); trim(gitid); // sender ID
                 fgets(fname, 128, fp); trim(fname);  // ignore
-                fclose(fp);
+                fclose(fp); 
 
                 // remove 4 lines
                 snprintf(buf, 256, "sed -i '1d' %s", TMPFILE);
@@ -239,7 +244,16 @@ void* server_thread(void* param){
             queue_msg(tmpmsg);
             continue;
         }
-
+   
+        else if(!strncmp(buf, "alive", strlen("alive"))){
+            snprintf(server_port, 16, "%d", DBSERVER_PORT+1);
+            usleep(10000);
+            snprintf(buf, 256, "cat "TMPFILE" | nc %s %s", DBSERVER_IP, server_port);
+            system(buf);
+          //  queue_msg("server checks alive");
+            continue;
+        }
+       
         // otherwise relay this to other peer.
         else{
             // buf was ip. second line is port.
@@ -253,7 +267,7 @@ void* server_thread(void* param){
             system(buf);
 
             // relay the file.
-            snprintf(buf, 256, "cat " TMPFILE " | nc %s %s", ip, port);
+            snprintf(buf, 256, "cat "TMPFILE" | nc %s %s", ip, port);
             system(buf);
 
             // for debug (remove later)
@@ -427,7 +441,8 @@ void main(){
 		exit(1);
 	}
 	
-	char *g_ip = get_hostip("eth0");
+//	char *g_ip = get_hostip("eh0");
+    char *g_ip = "127.0.0.1";
     snprintf(cmd, 256, "@adduser %s %d %s", g_ip, g_port, g_id);
     dbserver_interact(cmd);
     dbserver_interact("@userlist");

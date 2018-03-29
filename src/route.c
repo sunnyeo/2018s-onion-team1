@@ -10,6 +10,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include <sys/stat.h>
+
 typedef struct __token{
     char* word;
     struct __token* next;
@@ -33,8 +35,22 @@ void print_list(ptoken head){
     }
 }
 
+int msgfile_sign(char *filename, char *passphrase);
 unsigned int fsize(const char *filename);
 void trim(char* s);
+unsigned int fsize(const char *filename){
+    struct stat st;
+    if (stat(filename, &st) == 0)
+        return st.st_size;
+    return -1;
+}
+void trim(char* s){
+    while(s[strlen(s)-1]=='\n' || s[strlen(s)-1]==' '){
+        s[strlen(s)-1]=0;
+    }
+}
+
+ 
 ptoken split(const char* str, char deli){
     ptoken head = 0;
     ptoken res = 0;
@@ -162,7 +178,7 @@ unsigned int randpick(precord* p, unsigned int s, unsigned int e, unsigned int l
 #define MAXCIRCUIT 5 
 // fileoutput: onion. input: msg, from, to
 // return: ip/port(precord) of first target node.
-precord onion_route_msg(const char* from, const char* to, const char* msg){
+precord onion_route_msg(const char* from, const char* to, const char* msg, char* githubId, char* passphrase){
     char* cmd = malloc(4096);
     precord* arr = arrayfy(g_records);
     unsigned int len = record_count(g_records);
@@ -177,11 +193,23 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
     fprintf(fp, "text\n");
     fprintf(fp, "%s\n", from);
     fprintf(fp, "dummy\n");
-    fprintf(fp, "%s\n", msg);
+    //fprintf(fp, "%s\n", msg);
     fclose(fp);
     // encrypt this with e's pubkey.
-	// [TODO][암호화] msgfile_sign("onion", g_passphrase);
-	
+	// [암호화] msgfile_sign("onion", g_passphrase);
+	// sign with from's priv key
+    fp = fopen("signtmp", "w");
+    fprintf(fp, "%s\n", msg);
+    fclose(fp);
+    msgfile_sign("signtmp", passphrase);
+    system("cat signtmp >> onion; rm signtmp");
+
+    // encrypt the onion file
+    if(msgfile_encrypt("onion", to)==-1){
+        printf("encrypt error!!!\n");
+        exit(1);
+    }
+
     // start onioning... we use maximum MAXCIRCUIT circuits
     unsigned int i = 0;
     unsigned int r;
@@ -194,13 +222,19 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
         system(cmd);
         snprintf(cmd, 4096, "echo '%s' >> tmpfile", init->port);
         system(cmd);
+  //      snprintf(cmd, 4096, "cat onion.tmp >> tmpfile");
+    //    system(cmd);
         system("cat onion >> tmpfile; mv tmpfile onion");
 
-        // encrypt this onion with r's pubkey. 
-        // [TODO][암호화] msgfile_encrypt("onion", init->id);
-		
         init = arr[r];  // update the initial reciever.
         arr[r] = 0;     // now, this node is no more candidate.
+
+         // encrypt this onion with r's pubkey. 
+        // [암호화] msgfile_encrypt("onion", init->id);
+		if(msgfile_encrypt("onion", init->id)==-1){
+            printf("encrypt error!!!\n");
+            exit(1);
+        }
     }
     return init;
 }

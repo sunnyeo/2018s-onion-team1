@@ -12,10 +12,16 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <time.h>
+#include <semaphore.h>
+#include <sys/sem.h>
+#include <pthread.h>
 #define  BUFF_SIZE   1024
 
 #define _CRT_SECURE_NO_WARNINGS    // strtok 보안 경고로 인한 컴파일 에러 방지
+sem_t semaphore;
 
+int deleteUser(char *githubID);
 
 // developer : eternalklaus
 // contributer : MincheolSon, Dauren
@@ -24,24 +30,138 @@ int isClientAlive(char *ClientIP, int ClientPort){
     struct sockaddr_in serv_addr;
     struct hostent *server;
 	char   buff_snd[BUFF_SIZE+5];
- 
+    char   buff_rcv[BUFF_SIZE+5];
+    int rnum[3] = {0,};
+    int i;
+    char buf_1[256];
+    char buf_2[256];
+    FILE *snd;
+    FILE *rcv;
+    char portnum[16];
+ /*
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        error("ERROR opening socket");
+        printf("ERROR opening socket");
+        exit(1);
     }
 	memset( &serv_addr, 0, sizeof( serv_addr));
 	serv_addr.sin_family      = AF_INET;
     serv_addr.sin_port        = htons(ClientPort);
     serv_addr.sin_addr.s_addr = inet_addr(ClientIP);
 	
-	int isalive=connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr));
-	
-	strncpy(buff_snd, "alive?", strlen("alive?"));
-	write(sockfd, buff_snd, strlen(buff_snd)+1);  
-    close(sockfd);
-	printf("%s:%d is still alive...\n", ClientIP,ClientPort);
-	if (isalive < 0) return 0;
-    return 1;
+    srand(time(NULL));
+	if(-1==connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)))
+        return 0;
+*/
+    srand(time(NULL));
+    for(i=0; i<3; i++) rnum[i] = rand();
+    snd = fopen("snd_file","w");
+    snprintf(buff_snd, BUFF_SIZE, "alive%d%d%d", rnum[0], rnum[1], rnum[2]);
+    fputs(buff_snd, snd);
+    fclose(snd);
+  //  printf("alive???\n");
+    snprintf(buf_1, 256, "timeout 1 nc -l -p %d > %s 2>/dev/null", 4001, "rcv_file");
+   // system(buf);
+    snprintf(portnum, 16, "%d", ClientPort);
+    snprintf(buf_2, 256, "cat snd_file | nc %s %s", ClientIP, portnum);
+    system(buf_2);
+    system(buf_1);
+    rcv = fopen("rcv_file","r");
+    fgets(buff_rcv, BUFF_SIZE, rcv);
+//	write(sockfd, buff_snd, strlen(buff_snd)+1);
+  //  printf("%s\n",buff_snd);
+  //  read (sockfd, buff_rcv, BUFF_SIZE);
+  //  printf("%s\n", buff_rcv);
+   // close(sockfd);
+    if (strncmp(buff_snd, buff_rcv, strlen(buff_snd)) == 0){
+    //	printf("%s:%d is still alive...\n", ClientIP,ClientPort);
+	    return 1;
+    }
+    else return 0;
+}
+
+void alive_check(){
+    FILE *fp;
+    FILE *delete_list;
+    char *ClientIP;
+    int ClientPort;
+    char *Port_ch;
+    char *UserId;
+    int ret;
+    char fline[100];
+
+    /*
+    while(1){
+        sleep(1);
+        printf("11\n");
+       // sem_wait(&semaphore);
+        printf("22\n");
+        system("cp OnionUser.db OnionUser.db.list");
+        fp = fopen("OnionUser.db.list","r");    
+        delete_list = fopen("DeleteUser","w");
+        fgets(fline, 100, fp);
+        while(fline[0]!='-'){
+            ClientIP = strtok(fline, " ");
+            Port_ch = strtok(NULL, " ");
+            UserId = strtok(NULL, " ");
+            ClientPort = atoi(Port_ch);
+            ret = isClientAlive(ClientIP, ClientPort);
+            if(!ret) fprintf(delete_list, "%s\n", UserId);
+            fgets(fline, 100, fp);
+            printf("1313\n");
+        }
+        fclose(delete_list);
+        fclose(fp);
+        delete_list = fopen("DeleteUser","r");
+        while(!feof(delete_list)){
+            fgets(fline, 100, delete_list);
+            if(fline[0]=='\n') break;
+            printf("565\n");
+            deleteUser(fline);
+        }
+        fclose(delete_list);
+        system("rm DeleteUser");
+        printf("123\n");
+       // sem_post(&semaphore);
+    }
+    */
+    while(1){
+        sleep(1);
+        system("cp OnionUser.db OnionUser.db.list");
+        fp = fopen("OnionUser.db.list","r");
+        delete_list = fopen("DeleteUser","w");
+        fgets(fline, 100, fp);
+        while(fline[0]!='-'){
+            ClientIP = strtok(fline, " ");
+        //    printf("ip : %s\n", ClientIP);
+        //    Port_ch = strstr(fline, "\0");
+        //    printf("tmpe : %s\n", Port_ch);
+            Port_ch = strtok(NULL, " ");
+         //   printf("port : %s\n", Port_ch);
+         //   UserId = strstr(Port_ch, "\0");
+            UserId = strtok(NULL, " ");
+            ClientPort = atoi(Port_ch);
+            ret = isClientAlive(ClientIP, ClientPort);
+            if(!ret) fprintf(delete_list, "%s\n", UserId);
+            else printf("%s is still alive\n", UserId);
+            fgets(fline, 100, fp);
+        }
+        fclose(delete_list);
+        fclose(fp);
+        delete_list = fopen("DeleteUser","r");
+    //    printf("22\n");
+        while(1){
+            fgets(fline, 100, delete_list);
+            if(feof(delete_list)!=0) break;
+            if(fline[0]=='\n') break;
+        //    printf("565\n");
+            deleteUser(fline);
+        }
+    //    printf("33\n");
+        fclose(delete_list);
+        system("rm DeleteUser");
+        
+    }
 }
 
 // @userlist
@@ -108,6 +228,7 @@ int run_dbserver(int dbserver_port){
 
    while(1)
    {
+      // sem_wait(&semaphore);
       client_addr_size  = sizeof( client_addr);
       client_socket     = accept( server_socket, (struct sockaddr*)&client_addr, &client_addr_size);
 
@@ -128,10 +249,13 @@ int run_dbserver(int dbserver_port){
 	  if (!strncmp(buff_rcv,"@deleteuser",strlen("@deleteuser"))){ 
           deleteUser(buff_rcv+strlen("@deleteuser")+1);
 		  printf("[DBSERVER] User logout : %s\n",buff_rcv+sizeof("@deleteuser"));  // 서버 프린트  (buff_rcv+sizeof("@deleteuser")+1 하면 왜 짤리지?)
+          
 	  }
 	  
 	  if (!strncmp(buff_rcv,"@userlist",strlen("@userlist"))){
+        // sem_wait(&semaphore);
          sprintf(buff_snd, "%s", Userlist());  // user can download [buff_snd] buffer as a file. 
+        // sem_post(&semaphore);
 	  }
 	  write(client_socket, buff_snd, strlen(buff_snd)+1);  
       close(client_socket);
@@ -142,6 +266,25 @@ int run_dbserver(int dbserver_port){
 
 int main()
 {
-	run_dbserver(4000); // 4000번포트사용
+   //sem_init(&semaphore, 1, 1);
+
+   // pthread_t th1=0;
+    
+   // pthread_create( &th1, NULL, alive_thread, NULL);
+   // pthread_detach( th1 );
+    pid_t pid;
+
+    pid = fork();
+    switch(pid)
+    {
+        case -1 :
+            {
+                printf("fork fail\n");
+                return -1;
+            }
+        case 0 : alive_check();
+        default : run_dbserver(4000); // 4000번 포트사용
+    }
+   // run_dbserver(4000);
 }
 

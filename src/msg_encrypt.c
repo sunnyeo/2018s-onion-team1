@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+/*
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/err.h>
-
+*/
 #include <arpa/inet.h> /* For htonl() */
 #define BUFF_SIZE 1024
 
@@ -38,7 +39,7 @@ int msgfile_encrypt(char *file_name, char *githubId){
 
     snprintf(cmd, 100, "gpg --trust-model always --armor --encrypt --recipient %s %s", key, file_name); 
     system(cmd);
-	snprintf(cmd, 100, "mv %s.asc onion.tmp", file_name); 
+	snprintf(cmd, 100, "mv %s.asc onion", file_name); 
 	system(cmd);
 
     return 0;

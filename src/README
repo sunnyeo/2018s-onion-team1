@@ -17,11 +17,13 @@ user1's shell...
 $ gpg --import user1.priv
 $ gpg --import user1.pub
 
-user1's shell...
+user2's shell...
 $ gpg --import user2.priv
-$ gpg --import user1.pub
+$ gpg --import user2.pub
 
-user1's shell...
+user3's shell...
 $ gpg --import user3.priv
-$ gpg --import user1.pub
+$ gpg --import user3.pub
 
+# And..
+See DEMO.png

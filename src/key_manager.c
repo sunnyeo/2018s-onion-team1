@@ -57,19 +57,23 @@ int  auth_passphrase(char *PGP_passphrase, char *mygithubId){
 	return auth;
 }
 
+// also register
 int to_exist_publickey(char *githubId){
     char *url = "https://raw.githubusercontent.com/KAIST-IS521/2018-Spring/master/IndividualKeys/";
-	char cmd[BUFF_SIZE];
+	char cmd[256];
 	char githubIdpub[100];
 	int ret;
     
-    snprintf(githubIdpub, BUFF_SIZE,"%s.pub", githubId);
+    snprintf(githubIdpub, 256,"%s.pub", githubId);
 	ret = access(githubIdpub, F_OK);
-	if(ret==0) return 1;
-	else{ // no exist
-		if(is_valid_githubid(githubId)){
-			snprintf(cmd, BUFF_SIZE, "wget %s%s.pub 2>/dev/null", url, githubId);
-			system(cmd);
+	if(ret==0) {
+		snprintf(cmd, 256, "gpg --import %s.pub 2>/dev/null", githubId);
+		return 1;
+	}
+	else{ 
+		if(is_valid_githubid(githubId)){ // no exist and download.
+			snprintf(cmd, 256, "wget %s%s.pub 2>/dev/null", url, githubId); system(cmd);
+			snprintf(cmd, 256, "gpg --import %s.pub 2>/dev/null", githubId);
 			return 1;
 		}
 	}
@@ -133,33 +137,6 @@ int auth_user(char *githubId){
         system(cmd);
         return 1;
     }
-}
-
-int onion_register_all_pubkey(){
-	FILE *fp;
-	char line[100];
-	char *githubID;
-	fp = fopen("OnionUser.db.tmp", "r"); 
-	int i=0;
-	
-	if (fp == NULL) {
-		exit(101);
-	}
-	else{
-		while(!feof(fp)){
-			fgets(line, 100, fp);
-			if(line[0]=='-') break; // [TODO] trim
-			githubID = strchr(line, ' ')+1;
-			githubID = strchr(githubID, ' ')+1;
-			githubID[strlen(githubID)-1] = '\0';
-			printf("%s\n",githubID);
-			
-			to_exist_publickey(githubID);
-			register_pubkey(githubID);
-		}
-		printf("key registered\n");
-	}
-	return 0;
 }
 
 

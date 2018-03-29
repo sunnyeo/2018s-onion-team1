@@ -13,20 +13,3 @@ uid                  user3 (My name is user3) <user3@kaist.ac.kr>
 sub   2048R/08AF1383 2018-03-27
 
 
-
-# import command
-
-[user1]
-$ gpg --import private.key
-$ echo "default-key 613B1F0C" >> ~/.gnupg/gpg.conf   ---> if doesn't work, use sudo vi
-$ gpg --import public.key
-
-$ [user2]
-$ gpg --import private.key
-$ echo "default-key 6EE63A1F" >> ~/.gnupg/gpg.conf      
-$ gpg --import public.key
-
-$ [user3]
-$ gpg --import private.key
-$ echo "default-key 80767962" >> ~/.gnupg/gpg.conf 
-$ gpg --import public.key

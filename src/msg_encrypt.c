@@ -11,42 +11,25 @@
 
 
 int msgfile_encrypt(char *file_name, char *githubId){
-    
-    char cmd[100];
-    char cmd_result[30];
-    char key_temp[30];
-    char *temp;
-    char *key;
-    FILE *import;
-	to_exist_publickey(githubId);
-    snprintf(cmd, 100, "gpg --import %s.pub 2>&1", githubId);
-    import = popen(cmd, "r");
-    if(import == NULL){
-        printf("There is no %s.pub file\n", githubId);
-        return -1;
-    }
-    if(!fgets(cmd_result, 29, import)) { 
-        printf("There is no %s.pub file\n", githubId);
-        return -1;
+    char cmd[256];
+	char* keyID;
+	if(!to_exist_publickey(githubId)) {
+		printf("error! cannot get %s.pub...\n",githubId); 
+		exit(202);
 	}
-    temp = strstr(cmd_result, "key");
-    key = strstr(temp," ");
-    key=strncpy(key_temp, key+1, 15);
-    pclose(import);
-
-    snprintf(cmd, 100, "gpg --trust-model always --armor --encrypt --recipient %s %s 2>/dev/null", key, file_name); 
-    system(cmd);
-	snprintf(cmd, 100, "mv %s.asc %s", file_name, file_name); 
-	system(cmd);
-
+	keyID = get_pubkeyID(githubId);
+	
+	snprintf(cmd, 256,"echo keyid is %s >> log",keyID); system(cmd);
+	
+    snprintf(cmd, 256, "gpg --trust-model always --armor --encrypt --recipient %s %s 2>/dev/null", keyID, file_name); system(cmd);
+	snprintf(cmd, 256, "mv %s.asc %s", file_name, file_name); system(cmd);
     return 0;
 }
-// 인크립트호출해도 로컬에 onion이 그대로 남아있고
-// 디크립트만따로호출해서 디크립트해보면 실패하는게
-// 아..음..
+
 int msgfile_decrypt(char *filename, char *passphrase){
 	char cmd[BUFF_SIZE];
-	snprintf(cmd, BUFF_SIZE, "gpg --passphrase %s --decrypt %s > %s.tmp 2> /dev/null", passphrase, filename, filename); 
+	// gpg --batch --output dec --passphrase user1 --decrypt enc 2> /dev/null
+	snprintf(cmd, BUFF_SIZE, "gpg --batch --output %s.tmp --passphrase %s --decrypt %s 2>/dev/null", filename, passphrase, filename); //output : filename.tmp
 	system(cmd);
 	snprintf(cmd, BUFF_SIZE, "mv %s.tmp %s", filename, filename);
 	system(cmd);
@@ -96,7 +79,4 @@ int msgfile_sign_verify(char *filename, char *githubId, char *passphrase){
 	if(fsize(filename)==0) return 0;
 	else return 1;
 }
-
-
-
 

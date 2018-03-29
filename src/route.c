@@ -125,6 +125,7 @@ void parse_db(const char* fname){
     precord tmp;
     ptoken R;
     ptoken records = split(buf, '\n');
+	g_records = NULL;
     unsigned int n=1;
     while(records){
         R = split(records->word, ' ');
@@ -166,11 +167,12 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
     char* cmd = malloc(4096);
     precord* arr = arrayfy(g_records);
     unsigned int len = record_count(g_records);
-    unsigned int itercount = (MAXCIRCUIT < len-2) ? MAXCIRCUIT : len-2;
+    unsigned int itercount = (MAXCIRCUIT < len-1) ? MAXCIRCUIT : len-1;
     unsigned int start = idx_by_id(g_records, from);
     unsigned int end = idx_by_id(g_records, to);
     precord init = arr[end];        // initial reciever of the onion
-
+	precord initminus1 = arr[end];
+	
     FILE* fp = fopen("onion", "w");
     // final packet for end node.
     fprintf(fp, "final\n");
@@ -179,34 +181,29 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
     fprintf(fp, "dummy\n");
     fprintf(fp, "%s\n", msg);
     fclose(fp);
-    // encrypt this with e's pubkey.
-	// [ENC] msgfile_sign("onion", g_passphrase);
-	
+	// msgfile_sign("onion", g_passphrase); // [ENC] sign
 	
     // start onioning... we use maximum MAXCIRCUIT circuits
     unsigned int i = 0;
     unsigned int r;
+	
     for(i=0; i<itercount; i++){
-		// encrypt this onion with r's pubkey. 
-		// [ENC]
-        msgfile_encrypt("onion", init->id);       // Segfault? why?
-		// [END]
+		init = initminus1;   // update the initial reciever.
+		msgfile_encrypt("onion", init->id); // [ENC] encrypt
 		
-        // pick a random node..
-        r = randpick(arr, start, end, len);
-        // add target IP/PORT
-        snprintf(cmd, 4096, "echo '%s' > onion_enc", init->ip);
+		snprintf(cmd, 4096, "echo '%s' > onion.tmp", init->ip);
         system(cmd);
-        snprintf(cmd, 4096, "echo '%s' >> onion_enc", init->port);
+        snprintf(cmd, 4096, "echo '%s' >> onion.tmp", init->port);
         system(cmd);
-        // HERE
-		//system("cat onion >> onion_enc; mv onion_enc onion");
-        system("cat onion >> onion_enc; cp onion_enc onion");
+		system("cat onion >> onion.tmp; mv onion.tmp onion");
 		
-        init = arr[r];  // update the initial reciever.
-        arr[r] = 0;     // now, this node is no more candidate.
+		 // pick a random node..
+		if(i == itercount-1) continue;
+		r = randpick(arr, start, end, len);
+		initminus1 = arr[r]; // set initminus1 node
+		arr[r] = 0;          // now, this node is no more candidate.
     }
-    return init;
+    return init; // right next node
 }
 
 /*

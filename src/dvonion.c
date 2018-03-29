@@ -94,7 +94,7 @@ void draw_list_window(){
     if(!lock){
         dbserver_interact("@userlist");
 
-        fp = fopen("OnionUser.db.tmp", "r");
+        fp = fopen("OnionUser.db.tmp", "r+");
         if(fp==0){
             sleep(1);
             exit(1002);
@@ -119,7 +119,9 @@ void draw_list_window(){
         sleep(1);
     }
 }
-
+void debug(){
+	printf("debug");
+}
 void draw_server_window(){
     int i=0;
     PMSGQ tmp=0;
@@ -155,7 +157,7 @@ void trim(char* s){
 
 int get_total_usernum(){
 	FILE *fp;
-	fp = fopen("OnionUser.db.tmp","r");
+	fp = fopen("OnionUser.db.tmp","r+");
 	int i=0;
 	char line[100];
 	if (fp == NULL) return 0;
@@ -169,7 +171,7 @@ int get_total_usernum(){
 	return i;
 }
 
-#define TMPFILE "tmptmp"
+#define TMPFILE "onion_receive"
 void* server_thread(void* param){
 
     PMSGQ tmp=0;
@@ -181,55 +183,79 @@ void* server_thread(void* param){
     char gitid[64];
     char fname[128];
     char buf[256];
+	char* cmd = malloc(256);
     char* tmpmsg = malloc(512);
+	// remove TMPFILE prevent error99
+	
+	snprintf(cmd, 256, "rm -f %s", TMPFILE);
+	system(cmd);
+	
     while(1){
-
-        snprintf(buf, 256, "nc -l -p %d > %s 2>/dev/null", g_port, TMPFILE);
-        system(buf);
-        // decrypt the file!...
-
+		snprintf(cmd, 256, "rm -f %s", TMPFILE);
+		system(cmd);
+        snprintf(cmd, 256, "nc -l -p %d > %s 2>/dev/null", g_port, TMPFILE);
+        system(cmd);
+        
         if(fsize(TMPFILE) < 6){
             sleep(1);
             endwin();
-            printf("error!\n");
-            exit(99);       
+            printf("onion_receive error!\n");
+            snprintf(cmd,256,"rm %s",TMPFILE);
+			system(cmd);
+			exit(99);       
         }
 
-        fp = fopen(TMPFILE, "r");
+        fp = fopen(TMPFILE, "r+");
         if(fp==0){
             endwin();
             sleep(1);
             exit(100);
         }
-
-        // check magic
-        fgets(buf, 256, fp); trim(buf);
+		fclose(fp);
+		// [ENC] decrypt the file!... 
+		msgfile_decrypt(TMPFILE, g_passphrase);
+        
+		
+		fp = fopen(TMPFILE, "r+");
+        fgets(buf, 256, fp); trim(buf);// check magic
         if(!strcmp(buf, "final")){
-
-            // check type
-            fgets(buf, 256, fp); trim(buf);
+            fgets(buf, 256, fp); trim(buf);// check type
             if(!strcmp(buf, "text")){
                 fgets(gitid, 64, fp); trim(gitid); // sender ID
                 fgets(fname, 128, fp); trim(fname);  // ignore
                 fgets(buf, 256, fp); trim(buf);
 				
-				// [TODO][암호화] sed -d 4 line, verify it, and print it. 
-                snprintf(tmpmsg, 512, "%s says: %s", gitid, buf);
+				// sed -d 4 line, verify it, and print it. 
+				snprintf(cmd, 256, "sed -i '1d' %s", TMPFILE);
+				system(cmd);
+				system(cmd);
+				system(cmd);
+				system(cmd);
+				// [TODO]
+				/*
+				if(msgfile_sign_verify(TMPFILE, gitid, g_passphrase)) // verified message
+				...
+				*/
+				// [END] g_id
+                snprintf(tmpmsg, 512, "%s -> %s : %s", gitid, g_id, buf);
+				
+				
             }
             else if(!strcmp(buf, "file")){
                 fgets(gitid, 64, fp); trim(gitid); // sender ID
-                fgets(fname, 128, fp); trim(fname);  // ignore
+                fgets(fname, 128, fp); trim(fname); 
                 fclose(fp);
 
                 // remove 4 lines
-                snprintf(buf, 256, "sed -i '1d' %s", TMPFILE);
-                system(buf);
-                system(buf);
-                system(buf);
-                system(buf);
-
-                snprintf(buf, 256, "mv " TMPFILE " %s", fname);
-                system(buf);
+                snprintf(cmd, 256, "sed -i '1d' %s", TMPFILE);
+                system(cmd);
+                system(cmd);
+                system(cmd);
+                system(cmd);
+				
+                snprintf(cmd, 256, "mv " TMPFILE " %s", fname);
+				system(cmd);
+				
                 snprintf(tmpmsg, 512, "%s sent you %s file", gitid, fname);
             }
             else{
@@ -248,13 +274,13 @@ void* server_thread(void* param){
             fclose(fp);
 
             // remove 2 lines
-            snprintf(buf, 256, "sed -i '1d' %s", TMPFILE);
-            system(buf);
-            system(buf);
+            snprintf(cmd, 256, "sed -i '1d' %s", TMPFILE);
+            system(cmd);
+            system(cmd);
 
             // relay the file.
-            snprintf(buf, 256, "cat " TMPFILE " | nc %s %s", ip, port);
-            system(buf);
+            snprintf(cmd, 256, "cat " TMPFILE " | nc %s %s", ip, port);
+            system(cmd);
 
             // for debug (remove later)
             snprintf(buf, 256, "relay to %s %s", ip, port);
@@ -388,17 +414,20 @@ int dv_send(char* str, int isfile){
     char* from = g_id;
     char* p = strchr(to, ' ');
     p[0] = 0;
-
+	//if(msg==1) msg="";
+	
     parse_db("OnionUser.db.tmp");
-    precord t = onion_route_msg(from, to, msg);  // [TODO][암호화]   
+    precord t = onion_route_msg(from, to, msg);  // [ENC] fileoutput: onion. / t = right next node..
     printf("ip:%s, port%s\n", t->ip, t->port);
 
     char* cmd = malloc(256);
-    snprintf(cmd, 256, "cat onion | nc %s %s", t->ip, t->port);
-    system(cmd);
-
-    snprintf(cmd, 256, "to %s: %s", to, msg);
-    queue_msg(cmd);
+	
+	system("sed -i '1d' onion"); // remove next node ip
+	system("sed -i '1d' onion"); // remove next node port
+	
+    snprintf(cmd, 256, "cat onion | nc %s %s", t->ip, t->port); system(cmd); //relay to end node
+    snprintf(cmd, 256, "%s -> %s: %s", g_id, to, msg); queue_msg(cmd);
+    
 }
 
 void main(){
@@ -463,7 +492,7 @@ void main(){
         if(!strcmp(cmd2, prompt "/quit")){
             endwin();
             system("pkill nc 2>/dev/null");
-            system("rm OnionUser.db.tmp");
+            system("rm OnionUser.db.tmp onion* 2>/dev/null");
             snprintf(cmd, 256, "@deleteuser %s", g_id);
             dbserver_interact(cmd);
             _exit(0);

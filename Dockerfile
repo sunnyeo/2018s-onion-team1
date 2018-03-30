@@ -11,7 +11,8 @@ ADD . /onion
 # Don we need to install any dependicies?
 RUN apt-get update
 RUN apt-get -y install gcc \
-                       netcat
+                       netcat \
+                       libncurses-dev
 
 # Compile the onion messenger using Makefile(not created yet)
 CMD ["make"]

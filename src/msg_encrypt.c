@@ -9,127 +9,105 @@
 #include <arpa/inet.h> /* For htonl() */
 #define BUFF_SIZE 1024
 
+char *get_pubkeyID(char *githubId); // 원형선언을 안해놓으면 지멋대로 왜 함수 리턴타입을 integer 로 게싱을 하지?
+char *escapeshell(char * str);
 
-// encrypt [file_name] using [githubId].pub 
-// developer : MincheolSon
-int msgfile_encrypt(char *file_name, char *githubId){
-    
-    char cmd[100];
-    char cmd_result[30];
-    char key_temp[30];
-    char *temp;
-    char *key;
-    FILE *import;
- 
-    snprintf(cmd, 100, "gpg --import %s.pub 2>&1", githubId);
-    import = popen(cmd, "r");
-    if(import == NULL)
-    {
-        printf("There is no %s.pub file\n", githubId);
-        return -1;
-    }
+
+int msgfile_encrypt(char *filename, char *githubId){
+    char cmd[256];
+	char* keyID;
+	char *filename_s = escapeshell(filename);
+	char *githubId_s = escapeshell(githubId);
 	
-    if(!fgets(cmd_result, 29, import)) { 
-        printf("There is no %s.pub file\n", githubId);
-        return -1;
+	if(!to_exist_publickey(githubId_s)) {
+		printf("error! cannot get %s.pub...\n",githubId_s); 
+		exit(202);
 	}
-	printf("haha\n");
-    temp = strstr(cmd_result, "key");
-    key = strstr(temp," ");
-    temp = strstr(key, ":");
-    *temp = NULL;
-    key=strncpy(key_temp, key+1, 15);
-
-    pclose(import);
-
-    snprintf(cmd, 100, "gpg --trust-model always --armor --encrypt --recipient %s %s", key, file_name); 
-    system(cmd);
-
+	keyID = get_pubkeyID(githubId_s);
+    snprintf(cmd, 256, "gpg --trust-model always --armor --encrypt --recipient %s %s 2>/dev/null", keyID, filename_s); system(cmd);
+	snprintf(cmd, 256, "mv %s.asc %s", filename_s, filename_s); system(cmd); 
+	free(filename_s);
+	free(githubId_s);
     return 0;
 }
 
-
-// developer : hansh09
-int  msgfile_sign(char *filename, char *passphrase){
-// 메세지 파일을 서명한다. 
-	char cmd[BUFF_SIZE];
-	snprintf(cmd, BUFF_SIZE, "gpg --passphrase %s --sign %s", passphrase, filename);
+int msgfile_decrypt(char *filename, char *passphrase){
+	char cmd[256];
+	char *filename_s = escapeshell(filename);
+	char *passphrase_s = escapeshell(passphrase);
+	
+	snprintf(cmd, 256, "gpg --batch --output %s.tmp --passphrase %s --decrypt %s 2>/dev/null", filename_s, passphrase_s, filename_s); //output : filename.tmp
 	system(cmd);
-// encryption과 함께 사용하고 싶으면 gpg --armor -o [output.txt] --passphrase [passphrase] --sign --encrypt -r [recipient's ID] [input.txt] 를 사용한다. 
+	snprintf(cmd, 256, "mv %s.tmp %s", filename_s, filename_s);
+	system(cmd);
+	
+	free(filename_s);
+	free(passphrase_s);
+	return 0;
+
+}
+
+int msgfile_sign(char *filename, char *passphrase){ 
+	char cmd[256];
+	char *filename_s = escapeshell(filename);
+	char *passphrase_s = escapeshell(passphrase);
+	
+	snprintf(cmd, 256, "gpg --batch --trust-model always --armor --output %s.sig --passphrase %s --sign onion 2>/dev/null", filename_s, passphrase_s); system(cmd);
+	snprintf(cmd, 256, "mv %s.sig %s", filename_s, filename_s); system(cmd);
+	
+	free(filename_s);
+	free(passphrase_s);
 } 
 
-
-// developer : hansh09
-// [TODO] [성호] [오전 3:51] 넵 verify할 대상이 sign & encryption 같이 되었다고 생각하고 구현해서요 
-//        [성호] [오전 3:52] 염두해둬야될거같습니다
+// decrypt and verify
 int msgfile_sign_verify(char *filename, char *githubId, char *passphrase){
-	char cmd[BUFF_SIZE];
-	char buffer[BUFF_SIZE];
-
-	char cmd_temp[100];
-	char cmd_result[30];
-	char key_temp[30];
-	char *temp;
-	char *key;
-	FILE *import;
-
-	snprintf(cmd_temp, 100, "gpg --import %s.pub 2>&1", githubId);
-	import = popen(cmd_temp, "r");
+	char cmd[256];
+	char buf[256];
+	char *pkey = NULL;
+	char *skey = NULL;
+	FILE *fp;
 	
-	if(import == NULL){
-		printf("There is no %s.pub file\n", githubId);
-		return -1;
+	char *filename_s = escapeshell(filename);
+	char *githubId_s = escapeshell(githubId);
+	char *passphrase_s = escapeshell(passphrase);
+	
+	pkey = get_pubkeyID(githubId_s);
+	
+	if(!pkey) return 0; // cannot get keyid
+	
+	
+	// debug
+	snprintf(cmd, 256, "echo ----------------------- >> log"); system(cmd);
+	snprintf(cmd, 256, "echo filename_s is %s >> log",filename_s); system(cmd);
+	snprintf(cmd, 256, "echo githubId_s is %s >> log",githubId_s); system(cmd);
+	snprintf(cmd, 256, "echo passphrase_s is %s >> log",passphrase_s); system(cmd);
+	snprintf(cmd, 256, "cp %s %s.debug",filename_s, filename_s); system(cmd);
+	
+	// get keyid of sign
+	snprintf(cmd, 256, "gpg --verify %s 2> signature.tmp", filename_s); system(cmd);
+	
+	fp = fopen("signature.tmp", "r"); //read write and create
+	
+	while(fgets(buf, 256, fp)){
+		skey = strstr(buf, "key ID ");
+		if(skey) break;
 	}
-
-	fgets(cmd_result, 30, import);
-	temp = strstr(cmd_result, "key");
-	key = strstr(temp, " ");
-	temp = strstr(key, ":");
-	*temp = NULL;
-	key = strncpy(key_temp, key+1, 15);
-	pclose(import);
-
-	snprintf(cmd, BUFF_SIZE, "gpg --passphrase %s --decrypt %s > info.txt 2>&1", passphrase, filename);
-	system(cmd);
-	FILE *fp = fopen("info.txt", "r");
-
-
-	while(fgets(buffer, sizeof(buffer), fp) != NULL){
-		if(strstr(buffer, key)!=NULL){
-			return 1;
-		}
+	fclose(fp);
+	
+	if(!skey) return 0; // file isn't signed
+	
+	skey += strlen("key ID ");
+	
+	if(!strncmp(pkey,skey,8)){ // sign verified
+		snprintf(cmd, 256, "gpg --output %s.tmp --decrypt %s 2>/dev/null", filename_s, filename_s); system(cmd);
+		snprintf(cmd, 256, "mv %s.tmp %s", filename_s, filename_s); system(cmd);
+		system("rm signature.tmp");
+		return 1;
+	}
+	else {
+		system("rm signature.tmp");
+		return 0;
 	}
 	
-	if(fp){
-		fclose(fp);
-	}
-
-	return 0;
+	// no free.. memory leak :(
 }
-
-
-
-// [TODO] 디크립트했을때 터미널에메시지뜨는거 해결하기
-// 상대방이 보낸파일(내 퍼블릭키로 암호화되어 있음)을 나의 private key로 복호화한다.
-// developer : hansh09
-int msgfile_decrypt(char *filename, char *passphrase){
-	char cmd[BUFF_SIZE];
-	
-	// 테스트해보기................
-	snprintf(cmd, BUFF_SIZE, "gpg --passphrase %s --decrypt %s 2> /dev/null", passphrase, filename);
-	system(cmd);
-	
-	return 0;
-
-}
-
-int main(){
-	// 다른사람의 아이디를 가져와서 
-	//msgfile_encrypt("jiwon.txt","MYKEY");
-	msgfile_decrypt("jiwon.txt.asc","1004diana");
-}
-
-
-
-
-

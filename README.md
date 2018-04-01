@@ -100,13 +100,15 @@ All data is transmitted in file format. The detail of Protocol is described as b
 
 In the course of a series of transmissions, the anonymity of the sender and recipient is ensured and the encrypted file can be transmitted securely.
 
+[https://gitpitch.com/KAIST-IS521/2018s-presentation-team1/onion](https://gitpitch.com/KAIST-IS521/2018s-presentation-team1/onion) (For details)
+
                   
-# Work Distribution (will be updated soon)
+# Work Distribution
 
 | Name             | Role                     |
 |------------------|--------------------------|
-| Jiwon Choi       | DB Server & DB Client    |
-| Seongho Han      | PGP encryption & protorol|
-| Mincheol son     | Manage PGP key & protorol|
-| Dauren serkeshev | protocol, Create docker  |
+| Jiwon Choi       | DB Server & DB Client & manage whole project  |
+| Seongho Han      | PGP encryption & protorol & make presentation |
+| Mincheol son     | Manage PGP key & protorol & make demo video, onion slides |
+| Dauren serkeshev | protocol, Create docker   & make onion slides |
 

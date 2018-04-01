@@ -6,7 +6,7 @@ RUN apt install -y netcat
 ENV USER user1
 
 #Copy Binary
-ADD dvonion /root/dvonion
+ADD safetalk /root/safetalk
 ADD *.pub /root/
 ADD $USER.priv /root/$USER.priv
 ADD loop.sh /loop.sh

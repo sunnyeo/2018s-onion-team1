@@ -41,7 +41,7 @@
 #define LIST_W 24
 #define LIST_Y 1
 #define LIST_X 63
-#define prompt "DVONION>"
+#define prompt "SAFETALK>"
 
 #define DBSERVER_IP "192.168.60.140"
 #define DBSERVER_PORT 4000

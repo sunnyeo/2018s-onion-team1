@@ -9,6 +9,7 @@
 #include <arpa/inet.h> /* For htonl() */
 #define BUFF_SIZE 1024
 
+char *get_pubkeyID(char *githubId); // 원형선언을 안해놓으면 지멋대로 왜 함수 리턴타입을 integer 로 게싱을 하지?
 
 int msgfile_encrypt(char *file_name, char *githubId){
     char cmd[256];
@@ -18,17 +19,13 @@ int msgfile_encrypt(char *file_name, char *githubId){
 		exit(202);
 	}
 	keyID = get_pubkeyID(githubId);
-	
-	snprintf(cmd, 256,"echo keyid is %s >> log",keyID); system(cmd);
     snprintf(cmd, 256, "gpg --trust-model always --armor --encrypt --recipient %s %s 2>/dev/null", keyID, file_name); system(cmd);
 	snprintf(cmd, 256, "mv %s.asc %s", file_name, file_name); system(cmd); 
     return 0;
 }
 
-// HERE
 int msgfile_decrypt(char *filename, char *passphrase){
 	char cmd[256];
-	// 아 디크립트가 안되니까 tmp파일이 안생기는건가??? 디크립트 실패하나봐... 왜냐면 암호화자체가 안되있기 때문이지... [HERE]
 	snprintf(cmd, 256, "gpg --batch --output %s.tmp --passphrase %s --decrypt %s 2>/dev/null", filename, passphrase, filename); //output : filename.tmp
 	system(cmd);
 	snprintf(cmd, 256, "mv %s.tmp %s", filename, filename);
@@ -39,43 +36,45 @@ int msgfile_decrypt(char *filename, char *passphrase){
 
 int msgfile_sign(char *filename, char *passphrase){ 
 	char cmd[256];
-	snprintf(cmd, 256, "gpg --passphrase %s --sign %s 2>/dev/null", passphrase, filename);
-	system(cmd);
-	snprintf(cmd, 256, "mv %s.gpg %s", filename, filename);
-	system(cmd);
+	
+	snprintf(cmd, 256, "gpg --batch --trust-model always --armor --output %s.sig --passphrase %s --sign onion 2>/dev/null", filename, passphrase); system(cmd);
+	snprintf(cmd, 256, "mv %s.sig %s", filename, filename); system(cmd);
 // encryption과 함께 사용하고 싶으면 gpg --armor -o [output.txt] --passphrase [passphrase] --sign --encrypt -r [recipient's ID] [input.txt] 를 사용한다. 
 } 
 
 // decrypt and verify
 int msgfile_sign_verify(char *filename, char *githubId, char *passphrase){
 	char cmd[256];
-	char cmd_temp[256];
-	char cmd_result[256];
-	char key_temp[30];
-	char *temp;
-	char *key;
-	FILE *import;
-
-	snprintf(cmd_temp, 100, "gpg --import %s.pub 2>&1", githubId);
-	import = popen(cmd_temp, "r");
+	char buf[256];
+	char *pkey = NULL;
+	char *skey = NULL;
+	FILE *fp;
+	pkey = get_pubkeyID(githubId);
 	
-	if(import == NULL){
-		printf("There is no %s.pub file\n", githubId);
-		return -1;
+	if(!pkey) return 0; // cannot get keyid
+	
+	// get keyid of sign
+	snprintf(cmd, 256, "gpg --verify %s 2> signature.tmp", filename); system(cmd);
+	
+	fp = fopen("signature.tmp", "r"); //read write and create
+	
+	while(fgets(buf, 256, fp)){
+		skey = strstr(buf, "key ID ");
+		if(skey) break;
 	}
-
-	fgets(cmd_result, 30, import);
-	temp = strstr(cmd_result, "key");
-	key = strstr(temp, " ");
-	key = strncpy(key_temp, key+1, 15);
-	pclose(import);
-
-	snprintf(cmd, BUFF_SIZE, "gpg --passphrase %s --decrypt %s > %s.tmp", passphrase, filename, filename);
-	system(cmd);
-	snprintf(cmd, BUFF_SIZE, "mv %s.tmp %s", filename, filename);
-	system(cmd);
+	fclose(fp);
+	if(!skey) return 0; // file isn't signed
 	
-	if(fsize(filename)==0) return 0;
-	else return 1;
+	skey += strlen("key ID ");
+	
+	if(!strncmp(pkey,skey,8)){ // sign verified
+		snprintf(cmd, 256, "gpg --output %s.tmp --decrypt %s 2>/dev/null", filename, filename); system(cmd);
+		snprintf(cmd, 256, "sudo mv %s.tmp %s", filename, filename); system(cmd);
+		system("sudo rm signature.tmp");
+		return 1;
+	}
+	else {
+		system("sudo rm signature.tmp");
+		return 0;
+	}
 }
-

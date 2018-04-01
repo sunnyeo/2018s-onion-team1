@@ -71,7 +71,7 @@ char g_id[32];
 char g_passphrase[256];
 int lock=0;
 char* get_time();
-
+precord onion_route_file(const char* from, const char* to, const char* filename);
 
 void queue_msg(char* msg){
     PMSGQ tmp = (PMSGQ)malloc(sizeof(MSGQ));
@@ -215,21 +215,24 @@ void* server_thread(void* param){
             if(!strcmp(buf, "text")){
                 fgets(gitid, 64, fp); trim(gitid); // sender ID
                 fgets(fname, 128, fp); trim(fname);  // ignore
-                fgets(buf, 256, fp); trim(buf);
+                fgets(buf, 256, fp); trim(buf);    // ignore
+				fclose(fp);
 				
-				// sed -d 4 line, verify it, and print it. 
 				snprintf(cmd, 256, "sed -i '1d' %s", TMPFILE);
 				system(cmd);
 				system(cmd);
 				system(cmd);
 				system(cmd);
-				// [TODO]
-				/*
-				if(msgfile_sign_verify(TMPFILE, gitid, g_passphrase)) // verified message
-				...
-				*/
-				// [END] g_id
-                snprintf(tmpmsg, 512, "[%s]%s->%s : %s", get_time(), gitid, g_id, buf);
+				// [TODO][VER] 
+				if(msgfile_sign_verify(TMPFILE, gitid, g_passphrase)){ // verify and decrypt
+					fp = fopen(TMPFILE, "r+");
+					fgets(buf, 256, fp); trim(buf);
+					fclose(fp);
+					snprintf(tmpmsg, 512, "[%s][VERIFIED] %s->%s : %s", get_time(), gitid, g_id, buf);
+				}
+				else{
+					snprintf(tmpmsg, 512, "[%s][UNVERIFIED] ***someone sent you unverified message!***", get_time());
+				}
 				
 				
             }
@@ -245,10 +248,15 @@ void* server_thread(void* param){
                 system(cmd);
                 system(cmd);
 				
-                snprintf(cmd, 256, "mv " TMPFILE " %s", fname);
-				system(cmd);
-				
-                snprintf(tmpmsg, 512, "[%s]%s sent you file [%s]", get_time(), gitid, fname);
+                snprintf(cmd, 256, "mv " TMPFILE " %s", fname); system(cmd);
+
+				// [TODO][VER] 
+				if(msgfile_sign_verify(TMPFILE, gitid, g_passphrase)){ // verified message
+					snprintf(tmpmsg, 512, "[%s][VERIFIED] %s sent you file [%s]", get_time(), gitid, fname);
+				}
+				else{
+					snprintf(tmpmsg, 512, "[%s][UNVERIFIED] ***someone sent you unverified message!***", get_time());
+				}
             }
             else{
                 snprintf(tmpmsg, 512, "corrupted format");
@@ -292,7 +300,7 @@ void* list_thread(void* param){
 }
 
 void* listnum_thread(void *param){
-	// [TODO]
+	// [TODO][THREAD]
 	// snprintf(buf,256,"total %d users in onion network\n",size);
 	// mvwprintw(win, ?, 1, buf);
 }
@@ -442,7 +450,7 @@ void main(){
 	printf("enter your passphrase : ");
 	scanf("%256s",g_passphrase);
 	
-	// [TODO] github validation is temporally disabled on demo. enable it~
+	// [TODO][LOGIN] github validation is temporally disabled on demo. enable it~
 	/*
 	if(!is_valid_githubid(g_id)||!auth_passphrase(g_passphrase, g_id)){
 		printf("login failed.\n");

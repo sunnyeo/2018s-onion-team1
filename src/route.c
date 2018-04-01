@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+extern char g_passphrase[256];
 typedef struct __token{
     char* word;
     struct __token* next;
@@ -173,15 +174,21 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
     precord init = arr[end];        // initial reciever of the onion
 	precord initminus1 = arr[end];
 	
-    FILE* fp = fopen("onion", "w");
-    // final packet for end node.
+	// header
+    FILE* fp = fopen("onion_header", "w");
     fprintf(fp, "final\n");
     fprintf(fp, "text\n");
     fprintf(fp, "%s\n", from);
     fprintf(fp, "dummy\n");
-    fprintf(fp, "%s\n", msg);
     fclose(fp);
-	// msgfile_sign("onion", g_passphrase); // [ENC] sign
+	
+	// message
+	snprintf(cmd, 256, "echo %s > onion", msg); system(cmd);
+	
+	// header + [signed message]
+	msgfile_sign("onion", g_passphrase); // [TODO][VER]
+	snprintf(cmd, 256, "cat onion >> onion_header; mv onion_header onion"); system(cmd);
+
 	
     // start onioning... we use maximum MAXCIRCUIT circuits
     unsigned int i = 0;
@@ -217,7 +224,7 @@ precord onion_route_file(const char* from, const char* to, const char* filename)
     unsigned int end = idx_by_id(g_records, to);
     precord init = arr[end];        // initial reciever of the onion
 	precord initminus1 = arr[end];
-	
+
     FILE* fp = fopen("onion_header", "w");
     fprintf(fp, "final\n");
     fprintf(fp, "file\n"); //file
@@ -225,10 +232,10 @@ precord onion_route_file(const char* from, const char* to, const char* filename)
     fprintf(fp, "%s\n", filename);
     fclose(fp);
 	
+	// header + [signed message]
+	msgfile_sign(filename, g_passphrase); // [TODO][VER] sign to file
 	snprintf(cmd, 256, "cat %s >> onion_header; mv onion_header onion", filename); system(cmd);
-	
-	// msgfile_sign("onion", g_passphrase); // [ENC] sign
-	
+
     unsigned int i = 0;
     unsigned int r;
 	

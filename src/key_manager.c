@@ -95,6 +95,7 @@ char *get_pubkeyID(char *githubId){
 	FILE *f;
 	char c;
 	char *pubkeyID = (char*)malloc(16);
+	
 	if (!to_exist_publickey(githubId)) return NULL; // prerequisite : [githubId.pub] file. 
     snprintf(cmd, 256, "sudo gpg %s.pub > KeyId.tmp 2>/dev/null",githubId); system(cmd);
     f = fopen("KeyId.tmp", "r");

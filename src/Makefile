@@ -1,6 +1,6 @@
 all:
 	gcc -o dbserver dbserver.c security.c 
-	gcc -o dvonion dvonion.c route.c key_manager.c msg_encrypt.c security.c -lpthread -lncurses
+	gcc -o safetalk dvonion.c route.c key_manager.c msg_encrypt.c security.c -lpthread -lncurses
 	#copy public key
 	cp -rf /home/user1/.gnupg ../user1/
 	cp -rf /home/user2/.gnupg ../user2/
@@ -20,11 +20,11 @@ all:
 	cp ./TESTKEY/*.pub ../user4/
 	cp ./TESTKEY/*.pub ../user5/
 	
-	cp dvonion ../user1/
-	cp dvonion ../user2/
-	cp dvonion ../user3/
-	cp dvonion ../user4/
-	cp dvonion ../user5/
+	cp safetalk ../user1/
+	cp safetalk ../user2/
+	cp safetalk ../user3/
+	cp safetalk ../user4/
+	cp safetalk ../user5/
 	#copy private key
 	#gpgfile permission setting
 	chmod 777 ../user1/*

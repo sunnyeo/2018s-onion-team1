@@ -10,6 +10,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+// TODO escapeshell
+
 extern char g_passphrase[256];
 typedef struct __token{
     char* word;
@@ -33,6 +35,8 @@ void print_list(ptoken head){
         cur = cur->next;
     }
 }
+
+char *escapeshell(char* str); 
 
 unsigned int fsize(const char *filename);
 void trim(char* s);
@@ -182,11 +186,15 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
     fprintf(fp, "dummy\n");
     fclose(fp);
 	
+	char *msg_s = escapeshell(msg);
+	
 	// message
-	snprintf(cmd, 256, "echo %s > onion", msg); system(cmd);
+	snprintf(cmd, 256, "echo %s > onion", msg_s); system(cmd);
 	
 	// header + [signed message]
 	msgfile_sign("onion", g_passphrase); // [TODO][VER]
+	// [debug] 
+	snprintf(cmd, 256, "cp onion onion.sign"); system(cmd);
 	snprintf(cmd, 256, "cat onion >> onion_header; mv onion_header onion"); system(cmd);
 
 	
@@ -199,10 +207,8 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
 		msgfile_encrypt("onion", init->id); // [ENC] encrypt
 		snprintf(cmd, 256, "cp onion onion_enc%d", i); system(cmd); // [DBG]
 		
-		snprintf(cmd, 4096, "echo '%s' > onion.tmp", init->ip);
-        system(cmd);
-        snprintf(cmd, 4096, "echo '%s' >> onion.tmp", init->port);
-        system(cmd);
+		snprintf(cmd, 4096, "echo '%s' > onion.tmp", escapeshell(init->ip)); system(cmd);
+        snprintf(cmd, 4096, "echo '%s' >> onion.tmp", escapeshell(init->port)); system(cmd);
 		system("cat onion >> onion.tmp; mv onion.tmp onion");
 		
 		 // pick a random node..
@@ -211,6 +217,7 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
 		initminus1 = arr[r]; // set initminus1 node
 		arr[r] = 0;          // now, this node is no more candidate.
     }
+	free(msg_s);
     return init; // right next node
 }
 
@@ -232,9 +239,13 @@ precord onion_route_file(const char* from, const char* to, const char* filename)
     fprintf(fp, "%s\n", filename);
     fclose(fp);
 	
+	char *filename_s = escapeshell(filename);
+	
 	// header + [signed message]
-	msgfile_sign(filename, g_passphrase); // [TODO][VER] sign to file
-	snprintf(cmd, 256, "cat %s >> onion_header; mv onion_header onion", filename); system(cmd);
+	msgfile_sign(filename_s, g_passphrase); // [TODO][VER] sign to file
+	// [debug] 
+	snprintf(cmd, 256, "cp onion onion.sign"); system(cmd);
+	snprintf(cmd, 256, "cat %s >> onion_header; mv onion_header onion", filename_s); system(cmd);
 
     unsigned int i = 0;
     unsigned int r;
@@ -243,8 +254,8 @@ precord onion_route_file(const char* from, const char* to, const char* filename)
 		init = initminus1;   // update the initial reciever.
 		msgfile_encrypt("onion", init->id); // [ENC]
 		
-		snprintf(cmd, 4096, "echo '%s' > onion.tmp", init->ip); system(cmd);
-        snprintf(cmd, 4096, "echo '%s' >> onion.tmp", init->port); system(cmd);
+		snprintf(cmd, 4096, "echo '%s' > onion.tmp", escapeshell(init->ip)); system(cmd);
+        snprintf(cmd, 4096, "echo '%s' >> onion.tmp", escapeshell(init->port)); system(cmd);
 		system("cat onion >> onion.tmp; mv onion.tmp onion");
 		
 		if(i == itercount-1) continue;
@@ -252,12 +263,9 @@ precord onion_route_file(const char* from, const char* to, const char* filename)
 		initminus1 = arr[r]; // set initminus1 node
 		arr[r] = 0;          // now, this node is no more candidate.
     }
+	free(filename_s);
     return init; // right next node
 }
-
-
-
-
 
 /*
 void trim(char* s){

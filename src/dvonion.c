@@ -73,6 +73,9 @@ int lock=0;
 char* get_time();
 precord onion_route_file(const char* from, const char* to, const char* filename);
 
+// TODO escapeshell
+char *escapeshell(char* str); 
+
 void queue_msg(char* msg){
     PMSGQ tmp = (PMSGQ)malloc(sizeof(MSGQ));
     memset(tmp, 0, sizeof(MSGQ));
@@ -239,6 +242,7 @@ void* server_thread(void* param){
             else if(!strcmp(buf, "file")){
                 fgets(gitid, 64, fp); trim(gitid); // sender ID
                 fgets(fname, 128, fp); trim(fname); 
+				char *fname_s = escapeshell(fname);
                 fclose(fp);
 
                 // remove 4 lines
@@ -248,11 +252,11 @@ void* server_thread(void* param){
                 system(cmd);
                 system(cmd);
 				
-                snprintf(cmd, 256, "mv " TMPFILE " %s", fname); system(cmd);
+                snprintf(cmd, 256, "mv " TMPFILE " %s", fname_s); system(cmd);
 
 				// [TODO][VER] 
 				if(msgfile_sign_verify(TMPFILE, gitid, g_passphrase)){ // verified message
-					snprintf(tmpmsg, 512, "[%s][VERIFIED] %s sent you file [%s]", get_time(), gitid, fname);
+					snprintf(tmpmsg, 512, "[%s][VERIFIED] %s sent you file [%s]", get_time(), gitid, fname_s);
 				}
 				else{
 					snprintf(tmpmsg, 512, "[%s][UNVERIFIED] ***someone sent you unverified message!***", get_time());
@@ -279,14 +283,13 @@ void* server_thread(void* param){
             system(cmd);
 
             // relay the file.
-            snprintf(cmd, 256, "cat " TMPFILE " | nc %s %s", ip, port); system(cmd);
+            snprintf(cmd, 256, "cat " TMPFILE " | nc %s %s", escapeshell(ip), escapeshell(port)); system(cmd);
 
             // for debug (remove later)
             snprintf(buf, 256, "relay to %s %s", ip, port);
             queue_msg(buf);
             continue;
         }
-
         // error!
         queue_msg("protocol error!");
     }
@@ -430,11 +433,11 @@ int dv_send(char* str, int isfile){
 	system("sed -i '1d' onion"); // remove next node port
 	
 	if(!isfile){
-		snprintf(cmd, 256, "cat onion | nc %s %s", t->ip, t->port); system(cmd); //relay to end node
+		snprintf(cmd, 256, "cat onion | nc %s %s", escapeshell(t->ip), escapeshell(t->port)); system(cmd); //relay to end node
 		snprintf(cmd, 256, "[%s]%s->%s : %s", get_time(), g_id, to, msg); queue_msg(cmd);
 	}
 	else{ //file
-		snprintf(cmd, 256, "cat onion | nc %s %s", t->ip, t->port); system(cmd); //relay to end node
+		snprintf(cmd, 256, "cat onion | nc %s %s", escapeshell(t->ip), escapeshell(t->port)); system(cmd); //relay to end node
 		snprintf(cmd, 256, "[%s]%s->%s sendfile : %s", get_time(), g_id, to, msg); queue_msg(cmd);
 	}
 }
@@ -513,7 +516,10 @@ void main(){
         if(!strncmp(cmd2, prompt "/sendfile", strlen(prompt "/sendfile"))){
             dv_send(cmd2 + strlen(prompt "/sendfile "), 1);
         }
-
+		if(!strncmp(cmd2, prompt "/clear", strlen(prompt "/clear"))){
+            // clear shell
+			g_head = NULL;
+        }
         free(cmd2);
     }
 

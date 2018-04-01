@@ -16,6 +16,8 @@
 
 #define _CRT_SECURE_NO_WARNINGS    // strtok 보안 경고로 인한 컴파일 에러 방지
 
+//TODO
+char *escapeshell(char* str); 
 
 // developer : eternalklaus
 // contributer : MincheolSon, Dauren
@@ -57,14 +59,16 @@ char *Userlist(){ // User should download result as OnionUser.db.tmp
 // @adduser
 int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
 	char cmd[256];
-	snprintf(cmd, 256, "sed -i '1i%s ' %s", IpPortGithubId ,"OnionUser.db");system(cmd);
+	char *IpPortGithubId_s = escapeshell(IpPortGithubId);
+	snprintf(cmd, 256, "sed -i '1i%s ' %s", IpPortGithubId_s ,"OnionUser.db");system(cmd);free(IpPortGithubId_s);
 	return 1; 
 }
 
 // @deleteuser
 int deleteUser(char *githubID){
 	char cmd[256];
-	snprintf(cmd, 256, "sed -i '/ %s/d' %s", githubID ,"OnionUser.db"); system(cmd);
+	char *githubID_s = escapeshell(githubID);
+	snprintf(cmd, 256, "sed -i '/ %s/d' %s", githubID_s ,"OnionUser.db"); system(cmd);
 	
 	return 1;
 }

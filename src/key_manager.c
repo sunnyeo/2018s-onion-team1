@@ -16,6 +16,8 @@ int register_private_key(char *privfile);
 char *get_pubkeyID(char *githubId);
 int auth_user(char *githubId);
 int onion_register_all_pubkey();
+// TODO escapeshell
+char *escapeshell(char* str); 
 
 int is_valid_githubid(char *githubId){
 	char *url = "https://github.com/KAIST-IS521/2018-Spring/blob/master/IndividualKeys/";
@@ -26,10 +28,12 @@ int is_valid_githubid(char *githubId){
 }
 
 // Check whether [PGP_passphrase] string is  match with PGP private key(which is registered in the machine) or not.
-int  auth_passphrase(char *PGP_passphrase, char *mygithubId){
+int  auth_passphrase(char *passphrase, char *mygithubId){
     char cmd[256];
     char *pub_key ;
 	int auth;
+	
+	char *passphrase_s = escapeshell(passphrase);
 	
 	if(!to_exist_publickey(mygithubId)) {
 		printf("error! cannot get %s.pub...\n",mygithubId); 
@@ -40,7 +44,7 @@ int  auth_passphrase(char *PGP_passphrase, char *mygithubId){
 	
 	system("gpg --help > auth_passphrase.tmp");
     snprintf(cmd, 256, "sudo gpg --trust-model always -r %s --encrypt auth_passphrase.tmp", pub_key); system(cmd); // [HERE]
-    snprintf(cmd, 256, "echo %s | sudo gpg --passphrase-fd 0 -r %s --decrypt auth_passphrase.tmp.gpg > authresult.tmp",PGP_passphrase, pub_key); system(cmd);
+    snprintf(cmd, 256, "echo %s | sudo gpg --passphrase-fd 0 -r %s --decrypt auth_passphrase.tmp.gpg > authresult.tmp",passphrase_s, pub_key); system(cmd);
     system("sudo rm auth_passphrase.tmp.gpg");
     system("rm auth_passphrase.tmp");
 
@@ -50,6 +54,7 @@ int  auth_passphrase(char *PGP_passphrase, char *mygithubId){
     else auth=1; //valid
 	
 	system("rm authresult.tmp");
+	free(passphrase_s);
 	return auth;
 }
 
@@ -60,32 +65,37 @@ int to_exist_publickey(char *githubId){
 	char githubIdpub[100];
 	int ret;
     
-    snprintf(githubIdpub, 256,"%s.pub", githubId);
+	char *githubId_s = escapeshell(githubId);
+	
+    snprintf(githubIdpub, 256,"%s.pub", githubId_s);
 	ret = access(githubIdpub, F_OK);
 	if(ret==0) { // 0 : exist
-		snprintf(cmd, 256, "gpg --import %s.pub 2>/dev/null", githubId); system(cmd);
+		snprintf(cmd, 256, "gpg --import %s.pub 2>/dev/null", githubId_s); system(cmd); free(githubId_s);
 		return 1;
 	}
 	else{ 
-		if(is_valid_githubid(githubId)){ // no exist and download.
-			snprintf(cmd, 256, "wget %s%s.pub 2>/dev/null", url, githubId); system(cmd);
-			snprintf(cmd, 256, "gpg --import %s.pub 2>/dev/null", githubId); system(cmd);
+		if(is_valid_githubid(githubId_s)){ // no exist and download.
+			snprintf(cmd, 256, "wget %s%s.pub 2>/dev/null", url, githubId_s); system(cmd);
+			snprintf(cmd, 256, "gpg --import %s.pub 2>/dev/null", githubId_s); system(cmd);free(githubId_s);
 			return 1;
 		}
 	}
+	free(githubId_s);
 	return 0; // no exist both local and server. 
 }
 
 int register_pubkey(char *githubId){
     char cmd[256];
-	to_exist_publickey(githubId); // prerequisite : [githubId.pub] file. 
-    snprintf(cmd, 256,  "gpg --import %s.pub 2>/dev/null", githubId); system(cmd);
+	char *githubId_s = escapeshell(githubId);
+	to_exist_publickey(githubId_s); // prerequisite : [githubId.pub] file. 
+    snprintf(cmd, 256,  "gpg --import %s.pub 2>/dev/null", githubId_s); system(cmd); free(githubId_s);
 	return 1;
 }
 
 int register_private_key(char *privfile){
 	char cmd[256];
-	snprintf(cmd, 256, "gpg --allow-secret-key-import --import %s 2>/dev/null", privfile); system(cmd);
+	char *privfile_s = escapeshell(privfile);
+	snprintf(cmd, 256, "gpg --allow-secret-key-import --import %s 2>/dev/null", privfile_s); system(cmd); free(privfile_s);
 	return 1;
 }
 
@@ -95,9 +105,10 @@ char *get_pubkeyID(char *githubId){
 	FILE *f;
 	char c;
 	char *pubkeyID = (char*)malloc(16);
+	char *githubId_s = escapeshell(githubId);
 	
-	if (!to_exist_publickey(githubId)) return NULL; // prerequisite : [githubId.pub] file. 
-    snprintf(cmd, 256, "sudo gpg %s.pub > KeyId.tmp 2>/dev/null",githubId); system(cmd);
+	if (!to_exist_publickey(githubId_s)) return NULL; // prerequisite : [githubId_s.pub] file. 
+    snprintf(cmd, 256, "sudo gpg %s.pub > KeyId.tmp 2>/dev/null",githubId_s); system(cmd);
     f = fopen("KeyId.tmp", "r");
     if(fgetc(f) == EOF) return NULL;
     for(i=0;;c = fgetc(f))
@@ -111,6 +122,7 @@ char *get_pubkeyID(char *githubId){
         }
     }
 	snprintf(cmd,256,"rm KeyId.tmp"); system(cmd);
+	free(githubId_s);
 	return pubkeyID;
 }
 
@@ -123,12 +135,13 @@ int auth_user(char *githubId){
 	to_exist_publickey(githubId);// prerequisite : [githubId.pub] file. 
 	pubkeyID=get_pubkeyID(githubId);
 	if(!pubkeyID) return 0;
-    snprintf(cmd, 256, "sudo gpg --export-secret-keys -a %s > privateKey.tmp", pubkeyID);
+	char *pubkeyID_s = escapeshell(pubkeyID);
+    snprintf(cmd, 256, "sudo gpg --export-secret-keys -a %s > privateKey.tmp", pubkeyID_s);
     system(cmd);
     f = fopen("privateKey.tmp","r+");
     if(getc(f) == EOF) return 0;
     else{
-        snprintf(cmd,256,"sudo rm privateKey.tmp");system(cmd);
+        snprintf(cmd,256,"sudo rm privateKey.tmp");system(cmd);free(pubkeyID_s);
         return 1;
     }
 }

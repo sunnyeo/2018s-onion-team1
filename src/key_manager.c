@@ -43,9 +43,9 @@ int  auth_passphrase(char *passphrase, char *mygithubId){
 	if(!pub_key) return 0;
 	
 	system("gpg --help > auth_passphrase.tmp");
-    snprintf(cmd, 256, "sudo gpg --trust-model always -r %s --encrypt auth_passphrase.tmp", pub_key); system(cmd); // [HERE]
-    snprintf(cmd, 256, "echo %s | sudo gpg --passphrase-fd 0 -r %s --decrypt auth_passphrase.tmp.gpg > authresult.tmp",passphrase_s, pub_key); system(cmd);
-    system("sudo rm auth_passphrase.tmp.gpg");
+    snprintf(cmd, 256, "gpg --trust-model always -r %s --encrypt auth_passphrase.tmp", pub_key); system(cmd); // [HERE]
+    snprintf(cmd, 256, "echo %s | gpg --passphrase-fd 0 -r %s --decrypt auth_passphrase.tmp.gpg > authresult.tmp",passphrase_s, pub_key); system(cmd);
+    system("rm auth_passphrase.tmp.gpg");
     system("rm auth_passphrase.tmp");
 
     FILE *f;
@@ -108,7 +108,7 @@ char *get_pubkeyID(char *githubId){
 	char *githubId_s = escapeshell(githubId);
 	
 	if (!to_exist_publickey(githubId_s)) return NULL; // prerequisite : [githubId_s.pub] file. 
-    snprintf(cmd, 256, "sudo gpg %s.pub > KeyId.tmp 2>/dev/null",githubId_s); system(cmd);
+    snprintf(cmd, 256, "gpg %s.pub > KeyId.tmp 2>/dev/null",githubId_s); system(cmd);
     f = fopen("KeyId.tmp", "r");
     if(fgetc(f) == EOF) return NULL;
     for(i=0;;c = fgetc(f))
@@ -136,12 +136,12 @@ int auth_user(char *githubId){
 	pubkeyID=get_pubkeyID(githubId);
 	if(!pubkeyID) return 0;
 	char *pubkeyID_s = escapeshell(pubkeyID);
-    snprintf(cmd, 256, "sudo gpg --export-secret-keys -a %s > privateKey.tmp", pubkeyID_s);
+    snprintf(cmd, 256, "gpg --export-secret-keys -a %s > privateKey.tmp", pubkeyID_s);
     system(cmd);
     f = fopen("privateKey.tmp","r+");
     if(getc(f) == EOF) return 0;
     else{
-        snprintf(cmd,256,"sudo rm privateKey.tmp");system(cmd);free(pubkeyID_s);
+        snprintf(cmd,256,"rm privateKey.tmp");system(cmd);free(pubkeyID_s);
         return 1;
     }
 }

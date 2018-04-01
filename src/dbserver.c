@@ -108,11 +108,23 @@ int run_dbserver(int dbserver_port){
       exit(1);
    }
 
+   char* ipstr = malloc(100);
+   char* param = malloc(512);
+   
+   memset(ipstr, 0, 100);
+   memset(param, 0, 512);
    while(1)
    {
       client_addr_size  = sizeof( client_addr);
       client_socket     = accept( server_socket, (struct sockaddr*)&client_addr, &client_addr_size);
 
+	  struct sockaddr_in *s = (struct sockaddr_in *)&client_addr;
+      memset(ipstr, 0, 100);
+      inet_ntop(AF_INET, &s->sin_addr, ipstr, 100);
+      printf("Peer IP address: %s\n", ipstr);
+
+	  
+	  
       if ( -1 == client_socket)
       {
          printf( "[DBSERVER] Client connection failed\n");
@@ -123,7 +135,10 @@ int run_dbserver(int dbserver_port){
       
 	  // server command : @adduser, @deleteuser, @userlist
 	  if (!strncmp(buff_rcv,"@adduser",strlen("@adduser"))){ 
-         addUser(buff_rcv+strlen("@adduser")+1);                 
+		strcpy(param, ipstr);
+        strcat(param, " ");
+        strcat(param, buff_rcv+strlen("@adduser")+1);
+		 addUser(param);                 
 		 printf("[DBSERVER] User login : %s\n",buff_rcv+strlen("@adduser")+1); 
 	  }
 	  

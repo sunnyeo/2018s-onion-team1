@@ -43,7 +43,7 @@
 #define LIST_X 63
 #define prompt "DVONION>"
 
-#define DBSERVER_IP "127.0.0.1"
+#define DBSERVER_IP "192.168.60.140"
 #define DBSERVER_PORT 4000
 
 typedef struct __record{
@@ -283,7 +283,7 @@ void* server_thread(void* param){
             system(cmd);
 
             // relay the file.
-            snprintf(cmd, 256, "cat " TMPFILE " | nc %s %s", escapeshell(ip), escapeshell(port)); system(cmd);
+            snprintf(cmd, 256, "cat " TMPFILE " | nc %s %s -q 0", escapeshell(ip), escapeshell(port)); system(cmd);
 
             // for debug (remove later)
             snprintf(buf, 256, "relay to %s %s", ip, port);
@@ -433,11 +433,11 @@ int dv_send(char* str, int isfile){
 	system("sed -i '1d' onion"); // remove next node port
 	
 	if(!isfile){
-		snprintf(cmd, 256, "cat onion | nc %s %s", escapeshell(t->ip), escapeshell(t->port)); system(cmd); //relay to end node
+		snprintf(cmd, 256, "cat onion | nc %s %s -q 0", escapeshell(t->ip), escapeshell(t->port)); system(cmd); //relay to end node
 		snprintf(cmd, 256, "[%s]%s->%s : %s", get_time(), g_id, to, msg); queue_msg(cmd);
 	}
 	else{ //file
-		snprintf(cmd, 256, "cat onion | nc %s %s", escapeshell(t->ip), escapeshell(t->port)); system(cmd); //relay to end node
+		snprintf(cmd, 256, "cat onion | nc %s %s -q 0", escapeshell(t->ip), escapeshell(t->port)); system(cmd); //relay to end node
 		snprintf(cmd, 256, "[%s]%s->%s sendfile : %s", get_time(), g_id, to, msg); queue_msg(cmd);
 	}
 }
@@ -446,6 +446,8 @@ void main(){
     char cmd[256];
     pthread_t th1=0;
     pthread_t th2=0;
+	
+	putenv("TERM=xterm");
 	
     // init stuffs...
     g_head = 0;
@@ -468,8 +470,8 @@ void main(){
 		exit(1);
 	}
 	
-	char *g_ip = get_hostip("eth0");
-    snprintf(cmd, 256, "@adduser %s %d %s", g_ip, g_port, g_id);
+	//char *g_ip = get_hostip("eth0");
+    snprintf(cmd, 256, "@adduser %d %s", g_port, g_id);
     dbserver_interact(cmd);
     dbserver_interact("@userlist");
     
@@ -507,6 +509,7 @@ void main(){
             system("rm OnionUser.db.tmp onion* 2>/dev/null");
             snprintf(cmd, 256, "@deleteuser %s", g_id);
             dbserver_interact(cmd);
+			system("stty sane; clear");
             _exit(0);
             return;
         }

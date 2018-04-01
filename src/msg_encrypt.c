@@ -100,12 +100,12 @@ int msgfile_sign_verify(char *filename, char *githubId, char *passphrase){
 	
 	if(!strncmp(pkey,skey,8)){ // sign verified
 		snprintf(cmd, 256, "gpg --output %s.tmp --decrypt %s 2>/dev/null", filename_s, filename_s); system(cmd);
-		snprintf(cmd, 256, "sudo mv %s.tmp %s", filename_s, filename_s); system(cmd);
-		system("sudo rm signature.tmp");
+		snprintf(cmd, 256, "mv %s.tmp %s", filename_s, filename_s); system(cmd);
+		system("rm signature.tmp");
 		return 1;
 	}
 	else {
-		system("sudo rm signature.tmp");
+		system("rm signature.tmp");
 		return 0;
 	}
 	

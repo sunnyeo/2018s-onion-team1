@@ -39,7 +39,7 @@ int  auth_passphrase(char *PGP_passphrase, char *mygithubId){
 	if(!pub_key) return 0;
 	
 	system("gpg --help > auth_passphrase.tmp");
-    snprintf(cmd, 256, "sudo gpg -r %s --encrypt auth_passphrase.tmp", pub_key); system(cmd);
+    snprintf(cmd, 256, "sudo gpg --trust-model always -r %s --encrypt auth_passphrase.tmp", pub_key); system(cmd); // [HERE]
     snprintf(cmd, 256, "echo %s | sudo gpg --passphrase-fd 0 -r %s --decrypt auth_passphrase.tmp.gpg > authresult.tmp",PGP_passphrase, pub_key); system(cmd);
     system("sudo rm auth_passphrase.tmp.gpg");
     system("rm auth_passphrase.tmp");

@@ -20,15 +20,15 @@ int msgfile_encrypt(char *file_name, char *githubId){
 	keyID = get_pubkeyID(githubId);
 	
 	snprintf(cmd, 256,"echo keyid is %s >> log",keyID); system(cmd);
-	
     snprintf(cmd, 256, "gpg --trust-model always --armor --encrypt --recipient %s %s 2>/dev/null", keyID, file_name); system(cmd);
-	snprintf(cmd, 256, "mv %s.asc %s", file_name, file_name); system(cmd);
+	snprintf(cmd, 256, "mv %s.asc %s", file_name, file_name); system(cmd); 
     return 0;
 }
 
+// HERE
 int msgfile_decrypt(char *filename, char *passphrase){
 	char cmd[256];
-	// gpg --batch --output dec --passphrase user1 --decrypt enc 2> /dev/null
+	// 아 디크립트가 안되니까 tmp파일이 안생기는건가??? 디크립트 실패하나봐... 왜냐면 암호화자체가 안되있기 때문이지... [HERE]
 	snprintf(cmd, 256, "gpg --batch --output %s.tmp --passphrase %s --decrypt %s 2>/dev/null", filename, passphrase, filename); //output : filename.tmp
 	system(cmd);
 	snprintf(cmd, 256, "mv %s.tmp %s", filename, filename);

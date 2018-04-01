@@ -72,22 +72,6 @@ char g_passphrase[256];
 int lock=0;
 char* get_time();
 
-void system_s(char *cmd){ // [TODO] command injection attack filter...
-	/*
-	string illegal = "\"M\"\\a/ry/ h**ad:>> a\\/:*?\"| li*tt|le|| la\"mb.?";
-	int filter(char* cmd){
-        int r=0;
-        r += strstr(cmd, "=")!=0;
-        r += strstr(cmd, "PATH")!=0;
-        r += strstr(cmd, "export")!=0;
-        r += strstr(cmd, "/")!=0;
-        r += strstr(cmd, "`")!=0;
-        r += strstr(cmd, "flag")!=0;
-        return r;
-	}
-	*/
-	system(cmd);
-}
 
 void queue_msg(char* msg){
     PMSGQ tmp = (PMSGQ)malloc(sizeof(MSGQ));
@@ -200,21 +184,17 @@ void* server_thread(void* param){
     char* tmpmsg = malloc(512);
 	// remove TMPFILE prevent error99
 	
-	snprintf(cmd, 256, "rm -f %s", TMPFILE);
-	system(cmd);
+	snprintf(cmd, 256, "rm -f %s", TMPFILE); system(cmd);
 	
     while(1){
-		snprintf(cmd, 256, "rm -f %s", TMPFILE);
-		system(cmd);
-        snprintf(cmd, 256, "nc -l -p %d > %s 2>/dev/null", g_port, TMPFILE);
-        system(cmd);
+		snprintf(cmd, 256, "rm -f %s", TMPFILE); system(cmd);
+        snprintf(cmd, 256, "nc -l -p %d > %s 2>/dev/null", g_port, TMPFILE); system(cmd);
         
         if(fsize(TMPFILE) < 6){
             sleep(1);
             endwin();
             printf("onion_receive error!\n");
-            snprintf(cmd,256,"rm %s",TMPFILE);
-			system(cmd);
+            snprintf(cmd,256,"rm %s",TMPFILE); system(cmd);
 			exit(99);       
         }
 
@@ -225,8 +205,7 @@ void* server_thread(void* param){
             exit(100);
         }
 		fclose(fp);
-		// [ENC] decrypt the file!... 
-		msgfile_decrypt(TMPFILE, g_passphrase);
+		msgfile_decrypt(TMPFILE, g_passphrase);// [ENC] 
         
 		
 		fp = fopen(TMPFILE, "r+");
@@ -269,7 +248,7 @@ void* server_thread(void* param){
                 snprintf(cmd, 256, "mv " TMPFILE " %s", fname);
 				system(cmd);
 				
-                snprintf(tmpmsg, 512, "[%s]%s sent you %s file", get_time(), gitid, fname);
+                snprintf(tmpmsg, 512, "[%s]%s sent you file [%s]", get_time(), gitid, fname);
             }
             else{
                 snprintf(tmpmsg, 512, "corrupted format");
@@ -292,8 +271,7 @@ void* server_thread(void* param){
             system(cmd);
 
             // relay the file.
-            snprintf(cmd, 256, "cat " TMPFILE " | nc %s %s", ip, port);
-            system(cmd);
+            snprintf(cmd, 256, "cat " TMPFILE " | nc %s %s", ip, port); system(cmd);
 
             // for debug (remove later)
             snprintf(buf, 256, "relay to %s %s", ip, port);

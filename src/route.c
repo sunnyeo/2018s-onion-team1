@@ -190,6 +190,7 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
     for(i=0; i<itercount; i++){
 		init = initminus1;   // update the initial reciever.
 		msgfile_encrypt("onion", init->id); // [ENC] encrypt
+		snprintf(cmd, 256, "cp onion onion_enc%d", i); system(cmd); // [DBG]
 		
 		snprintf(cmd, 4096, "echo '%s' > onion.tmp", init->ip);
         system(cmd);
@@ -223,6 +224,7 @@ precord onion_route_file(const char* from, const char* to, const char* filename)
     fprintf(fp, "%s\n", from);
     fprintf(fp, "%s\n", filename);
     fclose(fp);
+	
 	snprintf(cmd, 256, "cat %s >> onion_header; mv onion_header onion", filename); system(cmd);
 	
 	// msgfile_sign("onion", g_passphrase); // [ENC] sign
@@ -230,14 +232,12 @@ precord onion_route_file(const char* from, const char* to, const char* filename)
     unsigned int i = 0;
     unsigned int r;
 	
-    for(i=0; i<itercount; i++){
+    for(i=0; i<itercount; i++){ // end -> randpick -> randpick -> ...
 		init = initminus1;   // update the initial reciever.
 		msgfile_encrypt("onion", init->id); // [ENC]
 		
-		snprintf(cmd, 4096, "echo '%s' > onion.tmp", init->ip);
-        system(cmd);
-        snprintf(cmd, 4096, "echo '%s' >> onion.tmp", init->port);
-        system(cmd);
+		snprintf(cmd, 4096, "echo '%s' > onion.tmp", init->ip); system(cmd);
+        snprintf(cmd, 4096, "echo '%s' >> onion.tmp", init->port); system(cmd);
 		system("cat onion >> onion.tmp; mv onion.tmp onion");
 		
 		if(i == itercount-1) continue;

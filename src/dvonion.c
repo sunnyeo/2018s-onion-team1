@@ -408,18 +408,21 @@ int dbserver_interact(char *command){
 
 // [ID] [MSG] or [ID] [FILE]
 int dv_send(char* str, int isfile){ 
-    char* cmd = malloc(256);
-	char* msg = strchr(str, ' ')+1;
-    char* to = str;
-    char* from = g_id;
-    char* p = strchr(to, ' ');
+	char *cmd = malloc(256);
+	char *msg;
+	char *to;
+	char *from = g_id;
 	precord t;
-    p[0] = 0;
-	//if(msg==1) msg="";
+	msg = strchr(str, ' ');
+	if (msg == NULL) return 0;
+	
+	msg[0] = 0; // termination
+	msg = msg + 1;
+	to = str;
 	
     parse_db("OnionUser.db.tmp");
 	if(!isfile) t = onion_route_msg(from, to, msg);  // [ENC] fileoutput: onion. / t = right next node..
-	else t = onion_route_file(from, to, msg);  // [ENC] fileoutput: onion. / t = right next node..
+	else t = onion_route_file(from, to, msg);        // [ENC] fileoutput: onion. / t = right next node..
 	
 	printf("ip:%s, port%s\n", t->ip, t->port);
 

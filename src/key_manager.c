@@ -23,7 +23,7 @@ int is_valid_githubid(char *githubId){
 	char *url = "https://github.com/KAIST-IS521/2018-Spring/blob/master/IndividualKeys/";
 	char cmd[256];
         // Vulnerability using PATH environment variable
-	snprintf(cmd, 256, "wget --spider --timeout=1 %s%s.pub 2>/dev/null", url, githubId);
+	snprintf(cmd, 256, "/usr/bin/wget --spider --timeout=1 %s%s.pub 2>/dev/null", url, githubId);
 	if(!system(cmd)) return 1; //valid
 	return 0;
 }

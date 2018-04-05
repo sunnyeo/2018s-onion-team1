@@ -60,7 +60,13 @@ char *Userlist(){ // User should download result as OnionUser.db.tmp
 int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
 	char cmd[256];
 	char *IpPortGithubId_s = escapeshell(IpPortGithubId);
-	snprintf(cmd, 256, "sed -i '1i%s ' %s", IpPortGithubId_s ,"OnionUser.db");system(cmd);free(IpPortGithubId_s);
+	printf("[*] IpPortGithubId   : %s\n\n",IpPortGithubId);
+	printf("[*] IpPortGithubId_s : %s\n\n",IpPortGithubId_s);
+	
+	snprintf(cmd, 256, "sed -i '1i%s ' %s", IpPortGithubId_s ,"OnionUser.db");
+	printf("[*] cmd : %s\n\n",cmd);
+	system(cmd);free(IpPortGithubId_s);
+	
 	return 1; 
 }
 
@@ -137,9 +143,9 @@ int run_dbserver(int dbserver_port){
 	  if (!strncmp(buff_rcv,"@adduser",strlen("@adduser"))){ 
 		strcpy(param, ipstr);
         strcat(param, " ");
-        strcat(param, buff_rcv+strlen("@adduser")+1);
+        strncat(param, buff_rcv+strlen("@adduser")+1, 512);
 		 addUser(param);                 
-		 printf("[DBSERVER] User login : %s\n",buff_rcv+strlen("@adduser")+1); 
+		 printf("[DBSERVER] User login : %s\n\n",buff_rcv+strlen("@adduser")+1); 
 	  }
 	  
 	  if (!strncmp(buff_rcv,"@deleteuser",strlen("@deleteuser"))){ 

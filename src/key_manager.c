@@ -35,6 +35,19 @@ int  auth_passphrase(char *passphrase, char *mygithubId){
 	
 	char *passphrase_s = escapeshell(passphrase);
 	
+	unsigned long long seed;
+	char fname[64];
+	int fd = open("/dev/urandom", O_RDONLY);
+	if(fd!=-1){
+		read(fd, &seed, sizeof(unsigned long long));
+	}
+	else{
+		printf("can't open urandom\n");
+	}
+	close(fd);
+	sprintf(fname, "%llx", seed);
+	
+	
 	if(!to_exist_publickey(mygithubId)) {
 		printf("error! cannot get %s.pub...\n",mygithubId); 
 	}
@@ -44,16 +57,17 @@ int  auth_passphrase(char *passphrase, char *mygithubId){
 	
 	system("gpg --help > auth_passphrase.tmp");
     snprintf(cmd, 256, "gpg --trust-model always -r %s --encrypt auth_passphrase.tmp", pub_key); system(cmd); // [HERE]
-    snprintf(cmd, 256, "echo %s | gpg --passphrase-fd 0 -r %s --decrypt auth_passphrase.tmp.gpg > authresult.tmp",passphrase_s, pub_key); system(cmd);
+    snprintf(cmd, 256, "echo %s | gpg --passphrase-fd 0 -r %s --decrypt auth_passphrase.tmp.gpg > %s",passphrase_s, pub_key, fname); system(cmd);
     system("rm auth_passphrase.tmp.gpg");
     system("rm auth_passphrase.tmp");
 
     FILE *f;
-    f = fopen("authresult.tmp", "r");
+	
+    f = fopen(fname, "r");
     if(fgetc(f) == EOF) auth=0;
     else auth=1; //valid
 	
-	system("rm authresult.tmp");
+	//sprintf(fname, "rm %llx", seed); system(fname);
 	free(passphrase_s);
 	return auth;
 }

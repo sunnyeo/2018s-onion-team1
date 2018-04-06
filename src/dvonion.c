@@ -113,7 +113,8 @@ void draw_list_window(){
             name = strchr(buf, ' ') + 1;   // second space.
             trim(name);
             lock++;
-            mvwprintw(win, 1+i, 1, name);
+            //XXX : FSB
+            mvwprintw(win, 1+i, 1, "%s", name);
             box(win, 0, 0);
             wrefresh(win);
             lock--;
@@ -133,7 +134,8 @@ void draw_server_window(){
         lock++;
         tmp = g_head;
         while(tmp != 0){
-            mvwprintw(win, 1+i, 1, tmp->msg);
+            //XXX: FSB
+            mvwprintw(win, 1+i, 1, "%s", tmp->msg);
             
             i++;
             tmp = tmp->next;
@@ -352,7 +354,8 @@ char* get_input(WINDOW* win){
             if(!lock){
                 lock++;
                 box(win, 0, 0);
-                mvwprintw(win, 1, 1, buf);
+            // XXX: FSB
+                mvwprintw(win, 1, 1, "%s", buf);
                 wrefresh(win);
                 lock--;
             }
@@ -363,7 +366,8 @@ char* get_input(WINDOW* win){
         if(!lock){
             lock++;
             box(win, 0, 0);
-            mvwprintw(win, 1, 1, buf);
+            // XXX: FSB
+            mvwprintw(win, 1, 1, "%s", buf);
             wrefresh(win);
             lock--;
         }

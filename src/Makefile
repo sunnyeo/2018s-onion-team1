@@ -32,9 +32,7 @@ all:
 	chmod 777 ../user3/*
 	chmod 777 ../user4/*
 	chmod 777 ../user5/*
-	#chmod -R 777 /home/user2/.gnupg
-	#chmod -R 777 /home/user3/.gnupg
-	#chmod -R 777 /home/user4/.gnupg
+	chmod 777 .
 	echo "----------end of file------------" > OnionUser.db # initialization db file
 	
 	

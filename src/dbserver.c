@@ -143,9 +143,10 @@ int run_dbserver(int dbserver_port){
 	  if (!strncmp(buff_rcv,"@adduser",strlen("@adduser"))){ 
 		strcpy(param, ipstr);
         strcat(param, " ");
-        strncat(param, buff_rcv+strlen("@adduser")+1, 512);
-		 addUser(param);                 
-		 printf("[DBSERVER] User login : %s\n\n",buff_rcv+strlen("@adduser")+1); 
+        // bug fixed
+        strncat(param, buff_rcv+strlen("@adduser")+1, 512-strlen(ipstr)-1);
+		addUser(param);                 
+		printf("[DBSERVER] User login : %s\n\n",buff_rcv+strlen("@adduser")+1); 
 	  }
 	  
 	  if (!strncmp(buff_rcv,"@deleteuser",strlen("@deleteuser"))){ 

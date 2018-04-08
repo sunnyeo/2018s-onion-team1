@@ -143,8 +143,8 @@ int run_dbserver(int dbserver_port){
 	  if (!strncmp(buff_rcv,"@adduser",strlen("@adduser"))){ 
 		strcpy(param, ipstr);
         strcat(param, " ");
-        // bug fixed
-        strncat(param, buff_rcv+strlen("@adduser")+1, 512-strlen(ipstr)-1);
+        // bug fixed - one byte overflow
+        strncat(param, buff_rcv+strlen("@adduser")+1, 512-strlen(ipstr)-2);
 		addUser(param);                 
 		printf("[DBSERVER] User login : %s\n\n",buff_rcv+strlen("@adduser")+1); 
 	  }

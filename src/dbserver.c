@@ -63,7 +63,7 @@ int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
 	printf("[*] IpPortGithubId   : %s\n\n",IpPortGithubId);
 	printf("[*] IpPortGithubId_s : %s\n\n",IpPortGithubId_s);
 	
-	snprintf(cmd, 256, "sed -i '1i%s ' %s", IpPortGithubId_s ,"OnionUser.db");
+	snprintf(cmd, 256, "/bin/sed -i '1i%s ' %s", IpPortGithubId_s ,"OnionUser.db");
 	printf("[*] cmd : %s\n\n",cmd);
 	system(cmd);free(IpPortGithubId_s);
 	
@@ -74,7 +74,7 @@ int addUser(char *IpPortGithubId) { // char userIp, int userPort, char *githubID
 int deleteUser(char *githubID){
 	char cmd[256];
 	char *githubID_s = escapeshell(githubID);
-	snprintf(cmd, 256, "sed -i '/ %s/d' %s", githubID_s ,"OnionUser.db"); system(cmd);
+	snprintf(cmd, 256, "/bin/sed -i '/ %s/d' %s", githubID_s ,"OnionUser.db"); system(cmd);
 	
 	return 1;
 }

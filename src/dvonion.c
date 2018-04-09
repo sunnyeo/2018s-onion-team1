@@ -189,17 +189,17 @@ void* server_thread(void* param){
     char* tmpmsg = malloc(512);
 	// remove TMPFILE prevent error99
 	
-	snprintf(cmd, 256, "rm -f %s", TMPFILE); system(cmd);
+	snprintf(cmd, 256, "/bin/rm -f %s", TMPFILE); system(cmd);
 	
     while(1){
-		snprintf(cmd, 256, "rm -f %s", TMPFILE); system(cmd);
-        snprintf(cmd, 256, "nc -l -p %d > %s 2>/dev/null", g_port, TMPFILE); system(cmd);
+		snprintf(cmd, 256, "/bin/rm -f %s", TMPFILE); system(cmd);
+        snprintf(cmd, 256, "/bin/nc -l -p %d > %s 2>/dev/null", g_port, TMPFILE); system(cmd);
         
         if(fsize(TMPFILE) < 6){
             sleep(1);
             endwin();
             printf("onion_receive error!\n");
-            snprintf(cmd,256,"rm %s",TMPFILE); system(cmd);
+            snprintf(cmd,256,"/bin/rm %s",TMPFILE); system(cmd);
 			exit(99);       
         }
 
@@ -223,7 +223,7 @@ void* server_thread(void* param){
                 fgets(buf, 256, fp); trim(buf);    // ignore
 				fclose(fp);
 				
-				snprintf(cmd, 256, "sed -i '1d' %s", TMPFILE);
+				snprintf(cmd, 256, "/bin/sed -i '1d' %s", TMPFILE);
 				system(cmd);
 				system(cmd);
 				system(cmd);
@@ -248,13 +248,13 @@ void* server_thread(void* param){
                 fclose(fp);
 
                 // remove 4 lines
-                snprintf(cmd, 256, "sed -i '1d' %s", TMPFILE);
+                snprintf(cmd, 256, "/bin/sed -i '1d' %s", TMPFILE);
                 system(cmd);
                 system(cmd);
                 system(cmd);
                 system(cmd);
 				
-                snprintf(cmd, 256, "mv " TMPFILE " %s", fname_s); system(cmd);
+                snprintf(cmd, 256, "/bin/mv " TMPFILE " %s", fname_s); system(cmd);
 
 				// [TODO][VER] 
 				if(msgfile_sign_verify(TMPFILE, gitid, g_passphrase)){ // verified message
@@ -280,12 +280,12 @@ void* server_thread(void* param){
             fclose(fp);
 
             // remove 2 lines
-            snprintf(cmd, 256, "sed -i '1d' %s", TMPFILE);
+            snprintf(cmd, 256, "/bin/sed -i '1d' %s", TMPFILE);
             system(cmd);
             system(cmd);
 
             // relay the file.
-            snprintf(cmd, 256, "cat " TMPFILE " | nc %s %s -q 0", escapeshell(ip), escapeshell(port)); system(cmd);
+            snprintf(cmd, 256, "/bin/cat " TMPFILE " | /bin/nc %s %s -q 0", escapeshell(ip), escapeshell(port)); system(cmd);
 
             // for debug (remove later)
             snprintf(buf, 256, "relay to %s %s", ip, port);
@@ -433,15 +433,15 @@ int dv_send(char* str, int isfile){
 	
 	printf("ip:%s, port%s\n", t->ip, t->port);
 
-	system("sed -i '1d' onion"); // remove next node ip
-	system("sed -i '1d' onion"); // remove next node port
+	system("/bin/sed -i '1d' onion"); // remove next node ip
+	system("/bin/sed -i '1d' onion"); // remove next node port
 	
 	if(!isfile){
-		snprintf(cmd, 256, "cat onion | nc %s %s -q 0", escapeshell(t->ip), escapeshell(t->port)); system(cmd); //relay to end node
+		snprintf(cmd, 256, "/bin/cat onion | /bin/nc %s %s -q 0", escapeshell(t->ip), escapeshell(t->port)); system(cmd); //relay to end node
 		snprintf(cmd, 256, "[%s]%s->%s : %s", get_time(), g_id, to, msg); queue_msg(cmd);
 	}
 	else{ //file
-		snprintf(cmd, 256, "cat onion | nc %s %s -q 0", escapeshell(t->ip), escapeshell(t->port)); system(cmd); //relay to end node
+		snprintf(cmd, 256, "/bin/cat onion | /bin/nc %s %s -q 0", escapeshell(t->ip), escapeshell(t->port)); system(cmd); //relay to end node
 		snprintf(cmd, 256, "[%s]%s->%s sendfile : %s", get_time(), g_id, to, msg); queue_msg(cmd);
 	}
 }
@@ -509,11 +509,11 @@ void main(){
         cmd2 = get_input(win);
         if(!strcmp(cmd2, prompt "/quit")){
             endwin();
-            system("pkill nc 2>/dev/null");
-            system("rm OnionUser.db.tmp onion* 2>/dev/null");
+            system("/usr/bin/pkill nc 2>/dev/null");
+            system("/bin/rm OnionUser.db.tmp onion* 2>/dev/null");
             snprintf(cmd, 256, "@deleteuser %s", g_id);
             dbserver_interact(cmd);
-			system("stty sane; clear");
+			system("/bin/stty sane; clear");
             _exit(0);
             return;
         }

@@ -24,8 +24,8 @@ int msgfile_encrypt(char *filename, char *githubId){
 		exit(202);
 	}
 	keyID = get_pubkeyID(githubId_s);
-    snprintf(cmd, 256, "gpg --trust-model always --armor --encrypt --recipient %s %s 2>/dev/null", keyID, filename_s); system(cmd);
-	snprintf(cmd, 256, "mv %s.asc %s", filename_s, filename_s); system(cmd); 
+    snprintf(cmd, 256, "/usr/bin/gpg --trust-model always --armor --encrypt --recipient %s %s 2>/dev/null", keyID, filename_s); system(cmd);
+	snprintf(cmd, 256, "/bin/mv %s.asc %s", filename_s, filename_s); system(cmd); 
 	free(filename_s);
 	free(githubId_s);
     return 0;
@@ -36,9 +36,9 @@ int msgfile_decrypt(char *filename, char *passphrase){
 	char *filename_s = escapeshell(filename);
 	char *passphrase_s = escapeshell(passphrase);
 	
-	snprintf(cmd, 256, "gpg --batch --output %s.tmp --passphrase %s --decrypt %s 2>/dev/null", filename_s, passphrase_s, filename_s); //output : filename.tmp
+	snprintf(cmd, 256, "/usr/bin/gpg --batch --output %s.tmp --passphrase %s --decrypt %s 2>/dev/null", filename_s, passphrase_s, filename_s); //output : filename.tmp
 	system(cmd);
-	snprintf(cmd, 256, "mv %s.tmp %s", filename_s, filename_s);
+	snprintf(cmd, 256, "/bin/mv %s.tmp %s", filename_s, filename_s);
 	system(cmd);
 	
 	free(filename_s);
@@ -52,8 +52,8 @@ int msgfile_sign(char *filename, char *passphrase){
 	char *filename_s = escapeshell(filename);
 	char *passphrase_s = escapeshell(passphrase);
 	
-	snprintf(cmd, 256, "gpg --batch --trust-model always --armor --output %s.sig --passphrase %s --sign onion 2>/dev/null", filename_s, passphrase_s); system(cmd);
-	snprintf(cmd, 256, "mv %s.sig %s", filename_s, filename_s); system(cmd);
+	snprintf(cmd, 256, "/usr/bin/gpg --batch --trust-model always --armor --output %s.sig --passphrase %s --sign onion 2>/dev/null", filename_s, passphrase_s); system(cmd);
+	snprintf(cmd, 256, "/bin/mv %s.sig %s", filename_s, filename_s); system(cmd);
 	
 	free(filename_s);
 	free(passphrase_s);
@@ -81,10 +81,10 @@ int msgfile_sign_verify(char *filename, char *githubId, char *passphrase){
 	snprintf(cmd, 256, "echo filename_s is %s >> log",filename_s); system(cmd);
 	snprintf(cmd, 256, "echo githubId_s is %s >> log",githubId_s); system(cmd);
 	snprintf(cmd, 256, "echo passphrase_s is %s >> log",passphrase_s); system(cmd);
-	snprintf(cmd, 256, "cp %s %s.debug",filename_s, filename_s); system(cmd);
+	snprintf(cmd, 256, "/bin/cp %s %s.debug",filename_s, filename_s); system(cmd);
 	
 	// get keyid of sign
-	snprintf(cmd, 256, "gpg --verify %s 2> signature.tmp", filename_s); system(cmd);
+	snprintf(cmd, 256, "/usr/bin/gpg --verify %s 2> signature.tmp", filename_s); system(cmd);
 	
 	fp = fopen("signature.tmp", "r"); //read write and create
 	
@@ -99,13 +99,13 @@ int msgfile_sign_verify(char *filename, char *githubId, char *passphrase){
 	skey += strlen("key ID ");
 	
 	if(!strncmp(pkey,skey,8)){ // sign verified
-		snprintf(cmd, 256, "gpg --output %s.tmp --decrypt %s 2>/dev/null", filename_s, filename_s); system(cmd);
-		snprintf(cmd, 256, "mv %s.tmp %s", filename_s, filename_s); system(cmd);
-		system("rm signature.tmp");
+		snprintf(cmd, 256, "/usr/bin/gpg --output %s.tmp --decrypt %s 2>/dev/null", filename_s, filename_s); system(cmd);
+		snprintf(cmd, 256, "/bin/mv %s.tmp %s", filename_s, filename_s); system(cmd);
+		system("/bin/rm signature.tmp");
 		return 1;
 	}
 	else {
-		system("rm signature.tmp");
+		system("/bin/rm signature.tmp");
 		return 0;
 	}
 	

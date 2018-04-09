@@ -194,8 +194,8 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
 	// header + [signed message]
 	msgfile_sign("onion", g_passphrase); // [TODO][VER]
 	// [debug] 
-	snprintf(cmd, 256, "cp onion onion.sign"); system(cmd);
-	snprintf(cmd, 256, "cat onion >> onion_header; mv onion_header onion"); system(cmd);
+	snprintf(cmd, 256, "/bin/cp onion onion.sign"); system(cmd);
+	snprintf(cmd, 256, "/bin/cat onion >> onion_header; /bin/mv onion_header onion"); system(cmd);
 
 	
     // start onioning... we use maximum MAXCIRCUIT circuits
@@ -205,11 +205,11 @@ precord onion_route_msg(const char* from, const char* to, const char* msg){
     for(i=0; i<itercount; i++){
 		init = initminus1;   // update the initial reciever.
 		msgfile_encrypt("onion", init->id); // [ENC] encrypt
-		snprintf(cmd, 256, "cp onion onion_enc%d", i); system(cmd); // [DBG]
+		snprintf(cmd, 256, "/bin/cp onion onion_enc%d", i); system(cmd); // [DBG]
 		
 		snprintf(cmd, 4096, "echo '%s' > onion.tmp", escapeshell(init->ip)); system(cmd);
         snprintf(cmd, 4096, "echo '%s' >> onion.tmp", escapeshell(init->port)); system(cmd);
-		system("cat onion >> onion.tmp; mv onion.tmp onion");
+		system("/bin/cat onion >> onion.tmp; /bin/mv onion.tmp onion");
 		
 		 // pick a random node..
 		if(i == itercount-1) continue;
@@ -244,8 +244,8 @@ precord onion_route_file(const char* from, const char* to, const char* filename)
 	// header + [signed message]
 	msgfile_sign(filename_s, g_passphrase); // [TODO][VER] sign to file
 	// [debug] 
-	snprintf(cmd, 256, "cp onion onion.sign"); system(cmd);
-	snprintf(cmd, 256, "cat %s >> onion_header; mv onion_header onion", filename_s); system(cmd);
+	snprintf(cmd, 256, "/bin/cp onion onion.sign"); system(cmd);
+	snprintf(cmd, 256, "/bin/cat %s >> onion_header; /bin/mv onion_header onion", filename_s); system(cmd);
 
     unsigned int i = 0;
     unsigned int r;
@@ -256,7 +256,7 @@ precord onion_route_file(const char* from, const char* to, const char* filename)
 		
 		snprintf(cmd, 4096, "echo '%s' > onion.tmp", escapeshell(init->ip)); system(cmd);
         snprintf(cmd, 4096, "echo '%s' >> onion.tmp", escapeshell(init->port)); system(cmd);
-		system("cat onion >> onion.tmp; mv onion.tmp onion");
+		system("/bin/cat onion >> onion.tmp; /bin/mv onion.tmp onion");
 		
 		if(i == itercount-1) continue;
 		r = randpick(arr, start, end, len);
